@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>バトロワ・シミュレーター妖</title>
+    <style>
+        body { background: #1a1a1a; color: #ddd; font-family: sans-serif; margin: 0; padding: 20px; line-height: 1.8; }
+
+        .container { max-width: 600px; margin: 0 auto; }
+
+        .section { background: #2a2a2a; padding: 15px; border-radius: 8px; margin-bottom: 30px; }
+
+        label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #aaa; }
+
+        textarea, input, select { width: 100%; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 10px; box-sizing: border-box; margin-bottom: 15px; }
+
+        button { width: 100%; padding: 15px; background: #444; color: white; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 1.1rem; }
+
+        #log { background: #000; padding: 20px; border-radius: 8px; min-height: 300px; display: none; border: 1px solid #333; }
+
+        .log-entry { margin-bottom: 25px; white-space: pre-wrap; }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="setup">
+    <h1>バトロワ・シミュレーター妖</h1>
+
+    <div class="section">
+        <label>参加者リスト</label>
+        <textarea id="p-list" rows="5">横山春草&#13;木村大観&#13;下村武山&#13;菱田観山</textarea>
+    </div>
+
+    <div class="section">
+        <label>通常イベント</label>
+        <textarea id="e-normal" rows="3">が接触し情報を共有しました&#13;は行動をともにし仲を深めました</textarea>
+        
+        <label>殺害イベント</label>
+        <textarea id="e-kill" rows="2">に 殺されました</textarea>
+    </div>
+
+    <div class="section">
+        <label>主催者の設定</label>
+        <select id="f-mode" onchange="toggleFixerInput()">
+            <option value="random">ランダムに選ぶ</option>
+            <option value="manual">名前で指定する</option>
+        </select>
+        
+        <div id="f-random-wrap">
+            <label>主催者人数 (0で主催者なし)</label>
+            <input type="number" id="f-count" value="1" min="0">
+        </div>
+
+        <div id="f-manual-wrap" class="hidden">
+            <label>主催者の名前 (1行1人)</label>
+            <textarea id="f-manual-list" rows="2"></textarea>
+        </div>
+    </div>
+
+    <div class="section">
+        <label>詳細確率操作 (0.1%単位)</label>
+        <label>殺害発生率 (%)</label>
+        <input type="number" id="prob-kill" value="60.0" min="0" max="100" step="0.1">
+        <label>放送発生率 (%)</label>
+        <input type="number" id="prob-broadcast" value="20.0" min="0" max="100" step="0.1">
+        <label>突発主催戦率 (%)</label>
+        <input type="number" id="prob-host-battle" value="5.0" min="0" max="100" step="0.1">
+        <label>表示速度</label>
+        <select id="speed"><option value="1200">通常</option><option value="0">高速</option></select>
+    </div>
+
+    <button onclick="initGame()">シミュレーション開始</button>
+</div>
+
+<div id="log" class="container"></div>
+
+<script>
+    let players = [];
+    let isHostRevealed = false;
+    let speed = 1200;
+    let deadQueue = [];
+    let broadcastNum = 1;
+    let probs = {};
+    let eventCounter = 0;
+
+    function toggleFixerInput() {
+        const mode = document.getElementById('f-mode').value;
+        document.getElementById('f-random-wrap').className = mode === 'random' ? '' : 'hidden';
+        document.getElementById('f-manual-wrap').className = mode === 'manual' ? '' : 'hidden';
+    }
+
+    async function initGame() {
+        const pInput = document.getElementById('p-list').value.split('\n').filter(n => n.trim());
+        players = pInput.map(n => ({ name: n.trim(), isAlive: true, kills: 0, isHost: false }));
+        deadQueue = [];
+        broadcastNum = 1;
+        isHostRevealed = false;
+        eventCounter = 0;
+        
+        const fMode = document.getElementById('f-mode').value;
+        if (fMode === 'random') {
+            const fCount = parseInt(document.getElementById('f-count').value);
+            const actualFCount = Math.min(fCount, players.length);
+            if (actualFCount > 0) {
+                [...players].sort(() => Math.random() - 0.5).slice(0, actualFCount).forEach(p => p.isHost = true);
+            }
+        } else {
+            const fManualList = document.getElementById('f-manual-list').value.split('\n').filter(n => n.trim());
+            players.forEach(p => { if (fManualList.includes(p.name)) p.isHost = true; });
+        }
+
+        probs = {
+            kill: parseFloat(document.getElementById('prob-kill').value),
+            broadcast: parseFloat(document.getElementById('prob-broadcast').value),
+            hostBattle: parseFloat(document.getElementById('prob-host-battle').value)
+        };
+
+        speed = parseInt(document.getElementById('speed').value);
+        document.getElementById('setup').style.display = 'none';
+        document.getElementById('log').style.display = 'block';
+        document.getElementById('log').innerHTML = "";
+
+        printLog("ゲーム開始");
+        await sleep(speed || 10);
+
+        await runLoop();
+    }
+
+    async function runLoop() {
+        while (true) {
+            const alive = players.filter(p => p.isAlive);
+            const nonHosts = alive.filter(p => !p.isHost);
+            const hosts = alive.filter(p => p.isHost);
+
+            eventCounter++;
+            if (speed === 0 && eventCounter % 50 === 0) {
+                await new Promise(r => setTimeout(r, 1)); 
+            }
+
+            if (!isHostRevealed && (nonHosts.length === 1 || (hosts.length > 0 && Math.random() * 100 < probs.hostBattle))) {
+                if (nonHosts.length > 0) {
+                    const winner = nonHosts[0];
+                    if (hosts.length > 0) {
+                        if (nonHosts.length === 1) {
+                            printLog(winner.name + "が生き残り優勝者に選ばれました\n\nゲームが終了しました");
+                            await sleep(speed || 50);
+                        }
+                        printLog("主催戦が始まりました");
+                        isHostRevealed = true;
+                        await sleep(speed || 50);
+                        continue;
+                    } else if (nonHosts.length === 1) {
+                        printLog(winner.name + "が生き残り優勝者に選ばれました\n\nゲームが終了しました");
+                        break;
+                    }
+                }
+            }
+
+            if (alive.length === 0 || (isHostRevealed && nonHosts.length === 0)) {
+                printLog("参加者が全滅しました");
+                break;
+            }
+
+            if (isHostRevealed && (hosts.length === 0 || nonHosts.length === 0)) {
+                break;
+            }
+
+            nextEvent(alive); 
+            if (speed > 0) await sleep(speed);
+
+            if (!isHostRevealed && Math.random() * 100 < probs.broadcast && deadQueue.length > 0) {
+                showBroadcast();
+                if (speed > 0) await sleep(speed);
+            }
+        }
+        showFinalStats();
+    }
+
+    function nextEvent(alive) {
+        let victim, killer;
+        let isKill = false;
+
+        if (isHostRevealed) {
+            const hosts = alive.filter(p => p.isHost);
+            const parts = alive.filter(p => !p.isHost);
+            if (hosts.length === 0 || parts.length === 0) return;
+            const host = hosts[Math.floor(Math.random() * hosts.length)];
+            const part = parts[Math.floor(Math.random() * parts.length)];
+            if (Math.random() < 0.5) { victim = part; killer = host; }
+            else { victim = host; killer = part; }
+            isKill = true;
+        } else {
+            const candidates = alive.filter(p => !p.isHost);
+            if (candidates.length < 2) return;
+            isKill = (Math.random() * 100 < probs.kill);
+            const sel = [...candidates].sort(() => Math.random() - 0.5).slice(0, 2);
+            victim = sel[0];
+            killer = sel[1];
+        }
+
+        if (isKill) {
+            let vPre = (isHostRevealed && victim.isHost) ? "主催者" : "";
+            let kPre = (isHostRevealed && killer.isHost) ? "主催者" : "";
+            let txt = "に 殺されました";
+            if (!isHostRevealed) {
+                const evs = document.getElementById('e-kill').value.split('\n').filter(n => n.trim());
+                txt = evs[Math.floor(Math.random() * evs.length)] || "に 殺されました";
+            }
+            printLog(vPre + victim.name + " が " + kPre + killer.name + " " + txt);
+            victim.isAlive = false;
+            killer.kills++;
+            if (!victim.isHost) deadQueue.push(victim.name);
+        } else {
+            const evs = document.getElementById('e-normal').value.split('\n').filter(n => n.trim());
+            const txt = evs[Math.floor(Math.random() * evs.length)] || " と 遭遇しました";
+            printLog(victim.name + " と " + killer.name + " " + txt);
+        }
+    }
+
+    function showBroadcast() {
+        printLog("第" + broadcastNum + "放送\n" + deadQueue.join("\n") + "\nが退場しました");
+        deadQueue = [];
+        broadcastNum++;
+    }
+
+    function showFinalStats() {
+        const survivors = players.filter(p => p.isAlive);
+        let res = "生還者は\n";
+        if (survivors.length > 0) {
+            res += survivors.map(s => (s.isHost ? "主催者" : "") + s.name).join("\n") + "\n以上の" + survivors.length + "名でした";
+        } else {
+            res += "なし";
+        }
+        res += "\n\n";
+
+        const killers = [...players].filter(p => p.kills > 0).sort((a, b) => b.kills - a.kills);
+        if (killers.length > 0) {
+            res += "トップマーダーは" + killers[0].kills + "人殺した" + killers[0].name + "でした\n";
+            for (let i = 1; i < Math.min(killers.length, 11); i++) {
+                res += "次点は" + killers[i].kills + "人殺した" + killers[i].name + "でした\n";
+            }
+        }
+        printLog(res);
+        
+        const btn = document.createElement('button');
+        btn.innerText = "タイトルに戻る";
+        btn.onclick = () => location.reload();
+        btn.style.marginTop = "20px";
+        document.getElementById('log').appendChild(btn);
+    }
+
+    function printLog(txt) {
+        const div = document.createElement('div');
+        div.className = "log-entry";
+        div.innerText = txt;
+        document.getElementById('log').appendChild(div);
+        if (speed > 0 || eventCounter % 10 === 0) {
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
