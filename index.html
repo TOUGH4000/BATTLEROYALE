@@ -6,25 +6,18 @@
     <title>バトロワ・シミュレーター妖</title>
     <style>
         body { background: #1a1a1a; color: #ddd; font-family: sans-serif; margin: 0; padding: 20px; line-height: 1.8; }
-
         .container { max-width: 600px; margin: 0 auto; }
-
         .section { background: #2a2a2a; padding: 15px; border-radius: 8px; margin-bottom: 30px; }
-
         label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #aaa; }
-
         textarea, input, select { width: 100%; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 10px; box-sizing: border-box; margin-bottom: 15px; }
-
         button { width: 100%; padding: 15px; background: #444; color: white; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 1.1rem; }
-
         #log { background: #000; padding: 20px; border-radius: 8px; min-height: 300px; display: none; border: 1px solid #333; }
-
         .log-entry { margin-bottom: 25px; white-space: pre-wrap; }
-
         .hidden { display: none; }
+        .save-msg { font-size: 0.8rem; color: #4caf50; text-align: center; margin-top: -20px; margin-bottom: 20px; }
     </style>
 </head>
-<body>
+<body onload="loadSettings()">
 
 <div class="container" id="setup">
     <h1>バトロワ・シミュレーター妖</h1>
@@ -39,7 +32,7 @@
         <textarea id="e-normal" rows="3">が接触し情報を共有しました&#13;は行動をともにし仲を深めました</textarea>
         
         <label>殺害イベント</label>
-        <textarea id="e-kill" rows="2">に 殺されました</textarea>
+        <textarea id="e-kill" rows="2">に殺されました</textarea>
     </div>
 
     <div class="section">
@@ -50,7 +43,7 @@
         </select>
         
         <div id="f-random-wrap">
-            <label>主催者人数 (0で主催者なし)</label>
+            <label>主催者人数</label>
             <input type="number" id="f-count" value="1" min="0">
         </div>
 
@@ -73,6 +66,7 @@
     </div>
 
     <button onclick="initGame()">シミュレーション開始</button>
+    <p style="text-align: center; font-size: 0.7rem; color: #666; margin-top: 10px;">※開始時に現在の設定を自動保存します</p>
 </div>
 
 <div id="log" class="container"></div>
@@ -86,6 +80,45 @@
     let probs = {};
     let eventCounter = 0;
 
+    // --- 保存と読み込みのロジック ---
+    const STORAGE_KEY = 'br_sim_v2_settings';
+
+    function saveSettings() {
+        const settings = {
+            pList: document.getElementById('p-list').value,
+            eNormal: document.getElementById('e-normal').value,
+            eKill: document.getElementById('e-kill').value,
+            fMode: document.getElementById('f-mode').value,
+            fCount: document.getElementById('f-count').value,
+            fManualList: document.getElementById('f-manual-list').value,
+            probKill: document.getElementById('prob-kill').value,
+            probBroadcast: document.getElementById('prob-broadcast').value,
+            probHostBattle: document.getElementById('prob-host-battle').value,
+            speed: document.getElementById('speed').value
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    }
+
+    function loadSettings() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return;
+        const s = JSON.parse(saved);
+
+        if(s.pList !== undefined) document.getElementById('p-list').value = s.pList;
+        if(s.eNormal !== undefined) document.getElementById('e-normal').value = s.eNormal;
+        if(s.eKill !== undefined) document.getElementById('e-kill').value = s.eKill;
+        if(s.fMode !== undefined) document.getElementById('f-mode').value = s.fMode;
+        if(s.fCount !== undefined) document.getElementById('f-count').value = s.fCount;
+        if(s.fManualList !== undefined) document.getElementById('f-manual-list').value = s.fManualList;
+        if(s.probKill !== undefined) document.getElementById('prob-kill').value = s.probKill;
+        if(s.probBroadcast !== undefined) document.getElementById('prob-broadcast').value = s.probBroadcast;
+        if(s.probHostBattle !== undefined) document.getElementById('prob-host-battle').value = s.probHostBattle;
+        if(s.speed !== undefined) document.getElementById('speed').value = s.speed;
+        
+        toggleFixerInput();
+    }
+    // ----------------------------
+
     function toggleFixerInput() {
         const mode = document.getElementById('f-mode').value;
         document.getElementById('f-random-wrap').className = mode === 'random' ? '' : 'hidden';
@@ -93,6 +126,8 @@
     }
 
     async function initGame() {
+        saveSettings(); // 開始時に保存を実行
+
         const pInput = document.getElementById('p-list').value.split('\n').filter(n => n.trim());
         players = pInput.map(n => ({ name: n.trim(), isAlive: true, kills: 0, isHost: false }));
         deadQueue = [];
