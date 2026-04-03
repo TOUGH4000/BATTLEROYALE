@@ -2,302 +2,310 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>バトロワ・シミュレーター妖</title>
+    <title>MRS - URL Editor Edition</title>
     <style>
-        body { background: #1a1a1a; color: #ddd; font-family: sans-serif; margin: 0; padding: 20px; line-height: 1.8; }
-        .container { max-width: 600px; margin: 0 auto; }
-        .section { background: #2a2a2a; padding: 15px; border-radius: 8px; margin-bottom: 30px; }
-        label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #aaa; }
-        textarea, input, select { width: 100%; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 10px; box-sizing: border-box; margin-bottom: 15px; }
-        button { width: 100%; padding: 15px; background: #444; color: white; border: 1px solid #666; border-radius: 4px; cursor: pointer; font-size: 1.1rem; }
-        #log { background: #000; padding: 20px; border-radius: 8px; min-height: 300px; display: none; border: 1px solid #333; }
-        .log-entry { margin-bottom: 25px; white-space: pre-wrap; }
-        .hidden { display: none; }
-        .save-msg { font-size: 0.8rem; color: #4caf50; text-align: center; margin-top: -20px; margin-bottom: 20px; }
+        body { font-family: "MS UI Gothic", sans-serif; background: #f0f0f0; font-size: 12px; margin: 0; padding: 10px; }
+        .window { width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+        .row { display: flex; gap: 10px; }
+        .col { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+        label { font-weight: bold; background: #dcdcdc; padding: 2px 5px; border: 1px solid #7a7a7a; }
+        textarea { font-family: "MS UI Gothic", monospace; font-size: 12px; resize: none; border: 1px solid #7a7a7a; padding: 5px; background: white; }
+        input[type="text"] { border: 1px solid #7a7a7a; padding: 2px; }
+        .panel { border: 1px solid #b0b0b0; padding: 8px; background: #e8e8e8; height: 100%; }
+        
+        /* URL設定ウィンドウのスタイル */
+        #urlEditorWindow { background: #f0f0f0; border: 2px solid #7a7a7a; padding: 10px; flex: 0 0 300px; display: flex; flex-direction: column; gap: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+        .url-box { height: 80px !important; width: 100%; }
+        .active-line-info { background: #333; color: #fff; padding: 3px 8px; font-weight: bold; margin-bottom: 5px; }
+
+        button { padding: 8px 20px; cursor: pointer; background: #e1e1e1; border: 1px solid #7a7a7a; font-weight: bold; }
+        button:hover { background: #d1d1d1; }
+        #textBox2 { background: white; color: black; height: 450px; }
+        .main-editor { height: 180px !important; }
+        .current-target { border: 2px solid #0078d7 !important; }
     </style>
 </head>
-<body onload="loadSettings()">
+<body>
 
-<div class="container" id="setup">
-    <h1>バトロワ・シミュレーター妖</h1>
-
-    <div class="section">
-        <label>参加者リスト</label>
-        <textarea id="p-list" rows="5">横山春草&#13;木村大観&#13;下村武山&#13;菱田観山</textarea>
-    </div>
-
-    <div class="section">
-        <label>通常イベント</label>
-        <textarea id="e-normal" rows="3">が接触し情報を共有しました&#13;は行動をともにし仲を深めました</textarea>
-        
-        <label>殺害イベント</label>
-        <textarea id="e-kill" rows="2">に殺されました</textarea>
-    </div>
-
-    <div class="section">
-        <label>主催者の設定</label>
-        <select id="f-mode" onchange="toggleFixerInput()">
-            <option value="random">ランダムに選ぶ</option>
-            <option value="manual">名前で指定する</option>
-        </select>
-        
-        <div id="f-random-wrap">
-            <label>主催者人数</label>
-            <input type="number" id="f-count" value="1" min="0">
+<div class="window">
+    <div class="row">
+        <div class="col" style="flex: 3;">
+            <div class="row">
+                <div class="col">
+                    <label>名簿</label>
+                    <textarea id="textBox1" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">太郎,1
+次郎,0
+三郎,2
+シロウ,1
+五郎,3
+六郎,1
+七太郎,1</textarea>
+                </div>
+                <div class="col">
+                    <label>死因</label>
+                    <textarea id="textBox8" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">に撲殺されました
+に暗殺されました
+に斬殺されました
+に毒殺されました
+に焼殺されました</textarea>
+                </div>
+                <div class="col">
+                    <label>イベント</label>
+                    <textarea id="textBox11" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">が接触し情報を共有しました
+は疑心暗鬼になり分裂してしまいました
+は行動をともにし仲を深めました</textarea>
+                </div>
+            </div>
         </div>
 
-        <div id="f-manual-wrap" class="hidden">
-            <label>主催者の名前 (1行1人)</label>
-            <textarea id="f-manual-list" rows="2"></textarea>
+        <div id="urlEditorWindow">
+            <div class="active-line-info" id="activeInfo">選択中の行: なし</div>
+            
+            <div id="normalUrlArea">
+                <label style="display:block; border:none; background:none;">通常時の画像URL (最大30)</label>
+                <textarea id="urlNormal" class="url-box" placeholder="1行に1つURLを入力" oninput="saveUrls()"></textarea>
+            </div>
+            
+            <div id="deathUrlArea">
+                <label style="display:block; border:none; background:none;">死亡時の画像URL (キャラのみ)</label>
+                <textarea id="urlDeath" class="url-box" placeholder="殺害された時のみ表示" oninput="saveUrls()"></textarea>
+            </div>
+            <div style="font-size: 10px; color: #666;">※上のリストの行を選択すると切り替わります</div>
         </div>
     </div>
 
-    <div class="section">
-        <label>詳細確率操作 (0.1%単位)</label>
-        <label>殺害発生率 (%)</label>
-        <input type="number" id="prob-kill" value="60.0" min="0" max="100" step="0.1">
-        <label>放送発生率 (%)</label>
-        <input type="number" id="prob-broadcast" value="20.0" min="0" max="100" step="0.1">
-        <label>突発主催戦率 (%)</label>
-        <input type="number" id="prob-host-battle" value="5.0" min="0" max="100" step="0.1">
-        <label>表示速度</label>
-        <select id="speed"><option value="1200">通常</option><option value="0">高速</option></select>
+    <div class="row">
+        <div class="col" style="flex: 2;">
+            <label>実行ログ</label>
+            <textarea id="textBox2" readonly></textarea>
+        </div>
+        <div class="col">
+            <div class="panel">
+                <label style="border:none; background:none;">設定項目</label><br><br>
+                <input type="checkbox" id="checkBox1" checked> 主催戦あり<br>
+                <input type="checkbox" id="checkBox2" checked> ランダム主催者<br>
+                <input type="checkbox" id="checkBox3" checked> 死因の適用<br>
+                <input type="checkbox" id="checkBox4" checked> その他イベント<br>
+                <input type="checkbox" id="checkBox5" checked> 好戦度の適用<br><br>
+                主催者名: <input type="text" id="textBox4" value="疾風の春草"><br><br>
+                <button onclick="runSimulation()">ロワ開始</button>
+            </div>
+        </div>
     </div>
-
-    <button onclick="initGame()">シミュレーション開始</button>
-    <p style="text-align: center; font-size: 0.7rem; color: #666; margin-top: 10px;">※開始時に現在の設定を自動保存します</p>
 </div>
 
-<div id="log" class="container"></div>
-
 <script>
-    let players = [];
-    let isHostRevealed = false;
-    let speed = 1200;
-    let deadQueue = [];
-    let broadcastNum = 1;
-    let probs = {};
-    let eventCounter = 0;
+// 全データ保持用オブジェクト
+// 形式: { 'textBox1': { '行数': { normal: [], death: [] } } }
+let storage = {
+    'textBox1': {},
+    'textBox8': {},
+    'textBox11': {}
+};
 
-    // --- 保存と読み込みのロジック ---
-    const STORAGE_KEY = 'br_sim_v2_settings';
+let currentTargetId = '';
+let currentLineNum = -1;
 
-    function saveSettings() {
-        const settings = {
-            pList: document.getElementById('p-list').value,
-            eNormal: document.getElementById('e-normal').value,
-            eKill: document.getElementById('e-kill').value,
-            fMode: document.getElementById('f-mode').value,
-            fCount: document.getElementById('f-count').value,
-            fManualList: document.getElementById('f-manual-list').value,
-            probKill: document.getElementById('prob-kill').value,
-            probBroadcast: document.getElementById('prob-broadcast').value,
-            probHostBattle: document.getElementById('prob-host-battle').value,
-            speed: document.getElementById('speed').value
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+// 選択行を検知してURLウィンドウを更新
+function updateActiveLine(el) {
+    currentTargetId = el.id;
+    const textBeforeCursor = el.value.substr(0, el.selectionStart);
+    currentLineNum = textBeforeCursor.split('\n').length - 1;
+    const lineText = el.value.split('\n')[currentLineNum] || "";
+
+    // ヘッダー情報更新
+    const categoryName = {"textBox1":"名簿", "textBox8":"死因", "textBox11":"イベント"}[el.id];
+    document.getElementById('activeInfo').innerText = `選択: ${categoryName} [${currentLineNum + 1}行目]`;
+    
+    // 死亡URL入力欄の表示制御 (名簿の時だけ出す)
+    document.getElementById('deathUrlArea').style.visibility = (el.id === 'textBox1') ? 'visible' : 'hidden';
+
+    // 既存データの読み込み
+    if (!storage[currentTargetId][currentLineNum]) {
+        storage[currentTargetId][currentLineNum] = { normal: [], death: [] };
     }
+    document.getElementById('urlNormal').value = storage[currentTargetId][currentLineNum].normal.join('\n');
+    document.getElementById('urlDeath').value = storage[currentTargetId][currentLineNum].death.join('\n');
+}
 
-    function loadSettings() {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (!saved) return;
-        const s = JSON.parse(saved);
+// URL入力欄の変更を即座に保存
+function saveUrls() {
+    if (currentTargetId === '' || currentLineNum === -1) return;
+    
+    const normalVal = document.getElementById('urlNormal').value.split('\n').filter(u => u.trim().startsWith('http')).slice(0, 30);
+    const deathVal = document.getElementById('urlDeath').value.split('\n').filter(u => u.trim().startsWith('http')).slice(0, 30);
+    
+    storage[currentTargetId][currentLineNum] = {
+        normal: normalVal,
+        death: deathVal
+    };
+}
 
-        if(s.pList !== undefined) document.getElementById('p-list').value = s.pList;
-        if(s.eNormal !== undefined) document.getElementById('e-normal').value = s.eNormal;
-        if(s.eKill !== undefined) document.getElementById('e-kill').value = s.eKill;
-        if(s.fMode !== undefined) document.getElementById('f-mode').value = s.fMode;
-        if(s.fCount !== undefined) document.getElementById('f-count').value = s.fCount;
-        if(s.fManualList !== undefined) document.getElementById('f-manual-list').value = s.fManualList;
-        if(s.probKill !== undefined) document.getElementById('prob-kill').value = s.probKill;
-        if(s.probBroadcast !== undefined) document.getElementById('prob-broadcast').value = s.probBroadcast;
-        if(s.probHostBattle !== undefined) document.getElementById('prob-host-battle').value = s.probHostBattle;
-        if(s.speed !== undefined) document.getElementById('speed').value = s.speed;
-        
-        toggleFixerInput();
-    }
-    // ----------------------------
+function getRandUrl(category, lineIdx, isDeath = false) {
+    const data = storage[category][lineIdx];
+    if (!data) return "";
+    let pool = isDeath ? (data.death.length > 0 ? data.death : data.normal) : data.normal;
+    if (!pool || pool.length === 0) return "";
+    return pool[Math.floor(Math.random() * pool.length)];
+}
 
-    function toggleFixerInput() {
-        const mode = document.getElementById('f-mode').value;
-        document.getElementById('f-random-wrap').className = mode === 'random' ? '' : 'hidden';
-        document.getElementById('f-manual-wrap').className = mode === 'manual' ? '' : 'hidden';
-    }
+function runSimulation() {
+    const log = document.getElementById('textBox2');
+    const meiboLines = document.getElementById('textBox1').value.split('\n');
+    const satsugaiLines = document.getElementById('textBox8').value.split('\n');
+    const eventLines = document.getElementById('textBox11').value.split('\n');
+    
+    log.value = "";
+    if (meiboLines.length === 0 || meiboLines[0] === "") return;
 
-    async function initGame() {
-        saveSettings(); // 開始時に保存を実行
+    let num = meiboLines.length;
+    let array = []; 
+    let array4 = []; 
+    let array5 = []; 
+    let array6 = new Array(num).fill(0); 
+    let array7 = Array.from({length: 6}, () => []); 
 
-        const pInput = document.getElementById('p-list').value.split('\n').filter(n => n.trim());
-        players = pInput.map(n => ({ name: n.trim(), isAlive: true, kills: 0, isHost: false }));
-        deadQueue = [];
-        broadcastNum = 1;
-        isHostRevealed = false;
-        eventCounter = 0;
-        
-        const fMode = document.getElementById('f-mode').value;
-        if (fMode === 'random') {
-            const fCount = parseInt(document.getElementById('f-count').value);
-            const actualFCount = Math.min(fCount, players.length);
-            if (actualFCount > 0) {
-                [...players].sort(() => Math.random() - 0.5).slice(0, actualFCount).forEach(p => p.isHost = true);
+    let num7=0, num8=0, num9=0, num12=1, num13=0, num14=0;
+
+    let orgName = document.getElementById('textBox4').value;
+    const c1 = document.getElementById('checkBox1').checked; 
+    const c2 = document.getElementById('checkBox3').checked; 
+    const c4 = document.getElementById('checkBox4').checked; 
+    const c5 = document.getElementById('checkBox5').checked; 
+    const isRandOrg = document.getElementById('checkBox2').checked;
+
+    meiboLines.forEach((line, i) => {
+        let parts = line.split(',');
+        let name = parts[0].trim();
+        let aggro = parts[1] ? parseInt(parts[1]) : 0;
+        array[i] = { name: name, aggro: aggro, originalIdx: i };
+        if (aggro >= 0 && aggro <= 5) array7[aggro].push(i);
+    });
+
+    let indices = Array.from({length: num}, (_, i) => i);
+    let tempIndices = [...indices];
+    for (let i = 0; i < num; i++) array4.push(tempIndices.splice(Math.floor(Math.random() * tempIndices.length), 1)[0]);
+    
+    for (let i = 0; i < num; i++) {
+        if (!c5) array5.push(indices[Math.floor(Math.random() * num)]);
+        else {
+            let pool = "";
+            for (let a = 1; a <= 5; a++) if (array7[a].length > 0) pool += a.toString().repeat(a);
+            if (pool === "") array5.push(indices[Math.floor(Math.random() * num)]);
+            else {
+                let chosenA = parseInt(pool[Math.floor(Math.random() * pool.length)]);
+                array5.push(array7[chosenA][Math.floor(Math.random() * array7[chosenA].length)]);
             }
-        } else {
-            const fManualList = document.getElementById('f-manual-list').value.split('\n').filter(n => n.trim());
-            players.forEach(p => { if (fManualList.includes(p.name)) p.isHost = true; });
         }
-
-        probs = {
-            kill: parseFloat(document.getElementById('prob-kill').value),
-            broadcast: parseFloat(document.getElementById('prob-broadcast').value),
-            hostBattle: parseFloat(document.getElementById('prob-host-battle').value)
-        };
-
-        speed = parseInt(document.getElementById('speed').value);
-        document.getElementById('setup').style.display = 'none';
-        document.getElementById('log').style.display = 'block';
-        document.getElementById('log').innerHTML = "";
-
-        printLog("ゲーム開始");
-        await sleep(speed || 10);
-
-        await runLoop();
     }
 
-    async function runLoop() {
-        while (true) {
-            const alive = players.filter(p => p.isAlive);
-            const nonHosts = alive.filter(p => !p.isHost);
-            const hosts = alive.filter(p => p.isHost);
+    let organizerIdx = -1;
+    if (isRandOrg) {
+        organizerIdx = array4[0];
+        orgName = array[organizerIdx].name;
+        num13 = 1; num14 = 1;
+    } else {
+        // 固定主催者が名簿にいるか確認（画像用）
+        organizerIdx = array.findIndex(p => p.name === orgName);
+    }
 
-            eventCounter++;
-            if (speed === 0 && eventCounter % 50 === 0) {
-                await new Promise(r => setTimeout(r, 1)); 
+    log.value += "ゲーム開始\n";
+
+    function processDeaths(count) {
+        for (let i = 0; i < count; i++) {
+            if (num13 >= num) break;
+            let vIdx = array4[num13];
+            let kIdx = array5[num13];
+            let v = array[vIdx];
+            let k = array[kIdx];
+            let urlLine = "";
+
+            if (!c2) {
+                log.value += v.name + " が " + k.name + " に 殺されました\n";
+                urlLine = (getRandUrl('textBox1', vIdx, true) + " " + getRandUrl('textBox1', kIdx)).trim();
+            } else {
+                let causeIdx = Math.floor(Math.random() * satsugaiLines.length);
+                log.value += v.name + " は " + k.name + satsugaiLines[causeIdx] + "\n";
+                urlLine = (getRandUrl('textBox1', vIdx, true) + " " + getRandUrl('textBox1', kIdx) + " " + getRandUrl('textBox8', causeIdx)).trim();
             }
+            if (urlLine) log.value += urlLine + "\n";
+            
+            array6[kIdx]++;
+            if (array6[num7] < array6[kIdx] && num7 != kIdx) { num9=num8; num8=num7; num7=kIdx; }
+            else if (array6[num8] < array6[kIdx] && num8 != kIdx) { num9=num8; num8=kIdx; }
+            else if (array6[num9] < array6[kIdx] && num9 != kIdx) { num9=kIdx; }
 
-            if (!isHostRevealed && (nonHosts.length === 1 || (hosts.length > 0 && Math.random() * 100 < probs.hostBattle))) {
-                if (nonHosts.length > 0) {
-                    const winner = nonHosts[0];
-                    if (hosts.length > 0) {
-                        if (nonHosts.length === 1) {
-                            printLog(winner.name + "が生き残り優勝者に選ばれました\n\nゲームが終了しました");
-                            await sleep(speed || 50);
-                        }
-                        printLog("主催戦が始まりました");
-                        isHostRevealed = true;
-                        await sleep(speed || 50);
-                        continue;
-                    } else if (nonHosts.length === 1) {
-                        printLog(winner.name + "が生き残り優勝者に選ばれました\n\nゲームが終了しました");
-                        break;
-                    }
+            if (c4 && Math.random() > 0.5) {
+                let e1Idx = array4[Math.floor(Math.random() * num)];
+                let e2Idx = array4[Math.floor(Math.random() * num)];
+                let evIdx = Math.floor(Math.random() * eventLines.length);
+                if (e1Idx !== e2Idx) {
+                    log.value += array[e1Idx].name + " と " + array[e2Idx].name + eventLines[evIdx] + "\n";
+                    let evUrl = (getRandUrl('textBox1', e1Idx) + " " + getRandUrl('textBox1', e2Idx) + " " + getRandUrl('textBox11', evIdx)).trim();
+                    if (evUrl) log.value += evUrl + "\n";
                 }
             }
-
-            if (alive.length === 0 || (isHostRevealed && nonHosts.length === 0)) {
-                printLog("参加者が全滅しました");
-                break;
-            }
-
-            if (isHostRevealed && (hosts.length === 0 || nonHosts.length === 0)) {
-                break;
-            }
-
-            nextEvent(alive); 
-            if (speed > 0) await sleep(speed);
-
-            if (!isHostRevealed && Math.random() * 100 < probs.broadcast && deadQueue.length > 0) {
-                showBroadcast();
-                if (speed > 0) await sleep(speed);
-            }
+            num13++;
         }
-        showFinalStats();
     }
 
-    function nextEvent(alive) {
-        let victim, killer;
-        let isKill = false;
+    let initialD = Math.floor(Math.random() * ((num - (isRandOrg?1:0)) / 4)) + Math.floor((num - (isRandOrg?1:0)) / 4);
+    processDeaths(initialD);
 
-        if (isHostRevealed) {
-            const hosts = alive.filter(p => p.isHost);
-            const parts = alive.filter(p => !p.isHost);
-            if (hosts.length === 0 || parts.length === 0) return;
-            const host = hosts[Math.floor(Math.random() * hosts.length)];
-            const part = parts[Math.floor(Math.random() * parts.length)];
-            if (Math.random() < 0.5) { victim = part; killer = host; }
-            else { victim = host; killer = part; }
-            isKill = true;
+    do {
+        log.value += "\n第" + num12 + "放送\n";
+        let num16 = 0;
+        for (let i = num14; i < num13; i++) {
+            if (array[array4[i]].name !== orgName) {
+                log.value += array[array4[i]].name + "\n";
+                num16++;
+            }
+        }
+        if (num16 !== 0) log.value += "が退場しました\n";
+        else log.value += "今回の死人はいませんでした\n";
+        log.value += "\n";
+        num14 = num13; num12++;
+        let rem = num - num13;
+        if (rem <= 1) break;
+        let nextD = Math.floor(Math.random() * (rem / 2)) + Math.floor(rem / 4) + 1;
+        processDeaths(nextD);
+    } while (Math.random() * (num - num13) > 1);
+
+    let lastSurvivorIdx = array4[num - 1];
+    if ((num - num13) === 1) log.value += array[lastSurvivorIdx].name + "が生き残り優勝者に選ばれました\n";
+    log.value += "ゲームが終了しました\n\n";
+
+    if (c1) {
+        log.value += "主催戦が始まりました\n\n";
+        let p = array[lastSurvivorIdx];
+        let orgUrls = (organizerIdx !== -1) ? storage['textBox1'][organizerIdx] : null;
+        let urlLine = "";
+        if (Math.random() < 0.33) {
+            log.value += "主催者" + orgName + " が " + p.name + " に 殺されました\n";
+            urlLine = (getRandUrl('textBox1', organizerIdx, true) + " " + getRandUrl('textBox1', lastSurvivorIdx)).trim();
         } else {
-            const candidates = alive.filter(p => !p.isHost);
-            if (candidates.length < 2) return;
-            isKill = (Math.random() * 100 < probs.kill);
-            const sel = [...candidates].sort(() => Math.random() - 0.5).slice(0, 2);
-            victim = sel[0];
-            killer = sel[1];
+            log.value += p.name + "は主催者" + orgName + "に殺されました\n参加者が全滅しました\n";
+            urlLine = (getRandUrl('textBox1', lastSurvivorIdx, true) + " " + getRandUrl('textBox1', organizerIdx)).trim();
+            num13 = num; 
         }
-
-        if (isKill) {
-            let vPre = (isHostRevealed && victim.isHost) ? "主催者" : "";
-            let kPre = (isHostRevealed && killer.isHost) ? "主催者" : "";
-            let txt = "に 殺されました";
-            if (!isHostRevealed) {
-                const evs = document.getElementById('e-kill').value.split('\n').filter(n => n.trim());
-                txt = evs[Math.floor(Math.random() * evs.length)] || "に 殺されました";
-            }
-            printLog(vPre + victim.name + " が " + kPre + killer.name + " " + txt);
-            victim.isAlive = false;
-            killer.kills++;
-            if (!victim.isHost) deadQueue.push(victim.name);
-        } else {
-            const evs = document.getElementById('e-normal').value.split('\n').filter(n => n.trim());
-            const txt = evs[Math.floor(Math.random() * evs.length)] || " と 遭遇しました";
-            printLog(victim.name + " と " + killer.name + " " + txt);
-        }
+        if (urlLine) log.value += urlLine + "\n";
+        log.value += "\n";
     }
 
-    function showBroadcast() {
-        printLog("第" + broadcastNum + "放送\n" + deadQueue.join("\n") + "\nが退場しました");
-        deadQueue = [];
-        broadcastNum++;
+    if (num - num13 > 0) {
+        log.value += "生還者は\n";
+        let num15 = 0;
+        for (let i = num13; i < num; i++) {
+            log.value += array[array4[i]].name + "\n";
+            num15++;
+        }
+        log.value += "以上の" + num15 + "名でした\n\n";
     }
 
-    function showFinalStats() {
-        const survivors = players.filter(p => p.isAlive);
-        let res = "生還者は\n";
-        if (survivors.length > 0) {
-            res += survivors.map(s => (s.isHost ? "主催者" : "") + s.name).join("\n") + "\n以上の" + survivors.length + "名でした";
-        } else {
-            res += "なし";
-        }
-        res += "\n\n";
-
-        const killers = [...players].filter(p => p.kills > 0).sort((a, b) => b.kills - a.kills);
-        if (killers.length > 0) {
-            res += "トップマーダーは" + killers[0].kills + "人殺した" + killers[0].name + "でした\n";
-            for (let i = 1; i < Math.min(killers.length, 11); i++) {
-                res += "次点は" + killers[i].kills + "人殺した" + killers[i].name + "でした\n";
-            }
-        }
-        printLog(res);
-        
-        const btn = document.createElement('button');
-        btn.innerText = "タイトルに戻る";
-        btn.onclick = () => location.reload();
-        btn.style.marginTop = "20px";
-        document.getElementById('log').appendChild(btn);
-    }
-
-    function printLog(txt) {
-        const div = document.createElement('div');
-        div.className = "log-entry";
-        div.innerText = txt;
-        document.getElementById('log').appendChild(div);
-        if (speed > 0 || eventCounter % 10 === 0) {
-            window.scrollTo(0, document.body.scrollHeight);
-        }
-    }
-
-    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+    if (array6[num7] > 0) log.value += "トップマーダーは" + array6[num7] + "人殺した" + array[num7].name + "でした\n";
+    if (num8 != num7 && array6[num8] > 0) log.value += "次点は" + array6[num8] + "人殺した" + array[num8].name + "でした\n";
+    if (num9 != num8 && num9 != num7 && array6[num9] > 0) log.value += "次点は" + array6[num9] + "人殺した" + array[num9].name + "でした\n";
+}
 </script>
 </body>
 </html>
