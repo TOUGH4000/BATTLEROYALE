@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>MRS - URL Editor Edition</title>
+    <title>風のバトロワシミュレーター</title>
     <style>
         body { font-family: "MS UI Gothic", sans-serif; background: #f0f0f0; font-size: 12px; margin: 0; padding: 10px; }
         .window { width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
@@ -13,7 +13,6 @@
         input[type="text"] { border: 1px solid #7a7a7a; padding: 2px; }
         .panel { border: 1px solid #b0b0b0; padding: 8px; background: #e8e8e8; height: 100%; }
         
-        /* URL設定ウィンドウのスタイル */
         #urlEditorWindow { background: #f0f0f0; border: 2px solid #7a7a7a; padding: 10px; flex: 0 0 300px; display: flex; flex-direction: column; gap: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
         .url-box { height: 80px !important; width: 100%; }
         .active-line-info { background: #333; color: #fff; padding: 3px 8px; font-weight: bold; margin-bottom: 5px; }
@@ -95,8 +94,6 @@
 </div>
 
 <script>
-// 全データ保持用オブジェクト
-// 形式: { 'textBox1': { '行数': { normal: [], death: [] } } }
 let storage = {
     'textBox1': {},
     'textBox8': {},
@@ -106,21 +103,15 @@ let storage = {
 let currentTargetId = '';
 let currentLineNum = -1;
 
-// 選択行を検知してURLウィンドウを更新
 function updateActiveLine(el) {
     currentTargetId = el.id;
     const textBeforeCursor = el.value.substr(0, el.selectionStart);
     currentLineNum = textBeforeCursor.split('\n').length - 1;
-    const lineText = el.value.split('\n')[currentLineNum] || "";
-
-    // ヘッダー情報更新
+    
     const categoryName = {"textBox1":"名簿", "textBox8":"死因", "textBox11":"イベント"}[el.id];
     document.getElementById('activeInfo').innerText = `選択: ${categoryName} [${currentLineNum + 1}行目]`;
-    
-    // 死亡URL入力欄の表示制御 (名簿の時だけ出す)
     document.getElementById('deathUrlArea').style.visibility = (el.id === 'textBox1') ? 'visible' : 'hidden';
 
-    // 既存データの読み込み
     if (!storage[currentTargetId][currentLineNum]) {
         storage[currentTargetId][currentLineNum] = { normal: [], death: [] };
     }
@@ -128,17 +119,11 @@ function updateActiveLine(el) {
     document.getElementById('urlDeath').value = storage[currentTargetId][currentLineNum].death.join('\n');
 }
 
-// URL入力欄の変更を即座に保存
 function saveUrls() {
     if (currentTargetId === '' || currentLineNum === -1) return;
-    
     const normalVal = document.getElementById('urlNormal').value.split('\n').filter(u => u.trim().startsWith('http')).slice(0, 30);
     const deathVal = document.getElementById('urlDeath').value.split('\n').filter(u => u.trim().startsWith('http')).slice(0, 30);
-    
-    storage[currentTargetId][currentLineNum] = {
-        normal: normalVal,
-        death: deathVal
-    };
+    storage[currentTargetId][currentLineNum] = { normal: normalVal, death: deathVal };
 }
 
 function getRandUrl(category, lineIdx, isDeath = false) {
@@ -151,17 +136,16 @@ function getRandUrl(category, lineIdx, isDeath = false) {
 
 function runSimulation() {
     const log = document.getElementById('textBox2');
-    const meiboLines = document.getElementById('textBox1').value.split('\n');
-    const satsugaiLines = document.getElementById('textBox8').value.split('\n');
-    const eventLines = document.getElementById('textBox11').value.split('\n');
+    const meiboLines = document.getElementById('textBox1').value.split('\n').filter(l => l.trim() !== "");
+    const satsugaiLines = document.getElementById('textBox8').value.split('\n').filter(l => l.trim() !== "");
+    const eventLines = document.getElementById('textBox11').value.split('\n').filter(l => l.trim() !== "");
     
     log.value = "";
-    if (meiboLines.length === 0 || meiboLines[0] === "") return;
+    if (meiboLines.length === 0) return;
 
     let num = meiboLines.length;
     let array = []; 
     let array4 = []; 
-    let array5 = []; 
     let array6 = new Array(num).fill(0); 
     let array7 = Array.from({length: 6}, () => []); 
 
@@ -185,19 +169,6 @@ function runSimulation() {
     let indices = Array.from({length: num}, (_, i) => i);
     let tempIndices = [...indices];
     for (let i = 0; i < num; i++) array4.push(tempIndices.splice(Math.floor(Math.random() * tempIndices.length), 1)[0]);
-    
-    for (let i = 0; i < num; i++) {
-        if (!c5) array5.push(indices[Math.floor(Math.random() * num)]);
-        else {
-            let pool = "";
-            for (let a = 1; a <= 5; a++) if (array7[a].length > 0) pool += a.toString().repeat(a);
-            if (pool === "") array5.push(indices[Math.floor(Math.random() * num)]);
-            else {
-                let chosenA = parseInt(pool[Math.floor(Math.random() * pool.length)]);
-                array5.push(array7[chosenA][Math.floor(Math.random() * array7[chosenA].length)]);
-            }
-        }
-    }
 
     let organizerIdx = -1;
     if (isRandOrg) {
@@ -205,7 +176,6 @@ function runSimulation() {
         orgName = array[organizerIdx].name;
         num13 = 1; num14 = 1;
     } else {
-        // 固定主催者が名簿にいるか確認（画像用）
         organizerIdx = array.findIndex(p => p.name === orgName);
     }
 
@@ -213,9 +183,11 @@ function runSimulation() {
 
     function processDeaths(count) {
         for (let i = 0; i < count; i++) {
-            if (num13 >= num) break;
+            if (num13 >= num - 1) break; 
             let vIdx = array4[num13];
-            let kIdx = array5[num13];
+            let survivors = array4.slice(num13 + 1);
+            let kIdx = survivors[Math.floor(Math.random() * survivors.length)];
+            
             let v = array[vIdx];
             let k = array[kIdx];
             let urlLine = "";
@@ -236,20 +208,23 @@ function runSimulation() {
             else if (array6[num9] < array6[kIdx] && num9 != kIdx) { num9=kIdx; }
 
             if (c4 && Math.random() > 0.5) {
-                let e1Idx = array4[Math.floor(Math.random() * num)];
-                let e2Idx = array4[Math.floor(Math.random() * num)];
-                let evIdx = Math.floor(Math.random() * eventLines.length);
-                if (e1Idx !== e2Idx) {
-                    log.value += array[e1Idx].name + " と " + array[e2Idx].name + eventLines[evIdx] + "\n";
-                    let evUrl = (getRandUrl('textBox1', e1Idx) + " " + getRandUrl('textBox1', e2Idx) + " " + getRandUrl('textBox11', evIdx)).trim();
-                    if (evUrl) log.value += evUrl + "\n";
+                let currentAlive = array4.slice(num13 + 1);
+                if (currentAlive.length >= 2) {
+                    let e1Idx = currentAlive[Math.floor(Math.random() * currentAlive.length)];
+                    let e2Idx = currentAlive[Math.floor(Math.random() * currentAlive.length)];
+                    let evIdx = Math.floor(Math.random() * eventLines.length);
+                    if (e1Idx !== e2Idx) {
+                        log.value += array[e1Idx].name + " と " + array[e2Idx].name + eventLines[evIdx] + "\n";
+                        let evUrl = (getRandUrl('textBox1', e1Idx) + " " + getRandUrl('textBox1', e2Idx) + " " + getRandUrl('textBox11', evIdx)).trim();
+                        if (evUrl) log.value += evUrl + "\n";
+                    }
                 }
             }
             num13++;
         }
     }
 
-    let initialD = Math.floor(Math.random() * ((num - (isRandOrg?1:0)) / 4)) + Math.floor((num - (isRandOrg?1:0)) / 4);
+    let initialD = Math.max(1, Math.floor(Math.random() * (num / 4)));
     processDeaths(initialD);
 
     do {
@@ -267,28 +242,35 @@ function runSimulation() {
         num14 = num13; num12++;
         let rem = num - num13;
         if (rem <= 1) break;
-        let nextD = Math.floor(Math.random() * (rem / 2)) + Math.floor(rem / 4) + 1;
+        let nextD = Math.floor(Math.random() * (rem / 2)) + 1;
         processDeaths(nextD);
-    } while (Math.random() * (num - num13) > 1);
+    } while (num - num13 > 1 && Math.random() > 0.2);
 
-    let lastSurvivorIdx = array4[num - 1];
-    if ((num - num13) === 1) log.value += array[lastSurvivorIdx].name + "が生き残り優勝者に選ばれました\n";
+    let survivorsAtEnd = array4.slice(num13);
+    if (survivorsAtEnd.length === 1) {
+        log.value += array[survivorsAtEnd[0]].name + "が生き残り優勝者に選ばれました\n";
+    }
     log.value += "ゲームが終了しました\n\n";
 
     if (c1) {
         log.value += "主催戦が始まりました\n\n";
-        let p = array[lastSurvivorIdx];
-        let orgUrls = (organizerIdx !== -1) ? storage['textBox1'][organizerIdx] : null;
-        let urlLine = "";
-        if (Math.random() < 0.33) {
-            log.value += "主催者" + orgName + " が " + p.name + " に 殺されました\n";
-            urlLine = (getRandUrl('textBox1', organizerIdx, true) + " " + getRandUrl('textBox1', lastSurvivorIdx)).trim();
-        } else {
-            log.value += p.name + "は主催者" + orgName + "に殺されました\n参加者が全滅しました\n";
-            urlLine = (getRandUrl('textBox1', lastSurvivorIdx, true) + " " + getRandUrl('textBox1', organizerIdx)).trim();
-            num13 = num; 
+        let finalSurvivors = [...array4.slice(num13)];
+        for (let pIdx of finalSurvivors) {
+            if (array[pIdx].name === orgName) continue; 
+            let p = array[pIdx];
+            if (Math.random() < 0.33) {
+                log.value += "主催者" + orgName + " が " + p.name + " に 殺されました\n";
+                let urlLine = (getRandUrl('textBox1', organizerIdx, true) + " " + getRandUrl('textBox1', pIdx)).trim();
+                if (urlLine) log.value += urlLine + "\n";
+                break; 
+            } else {
+                log.value += p.name + "は主催者" + orgName + "に殺されました\n";
+                let urlLine = (getRandUrl('textBox1', pIdx, true) + " " + getRandUrl('textBox1', organizerIdx)).trim();
+                if (urlLine) log.value += urlLine + "\n";
+                num13++; 
+            }
         }
-        if (urlLine) log.value += urlLine + "\n";
+        if (num === num13) log.value += "参加者が全滅しました\n";
         log.value += "\n";
     }
 
