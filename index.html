@@ -207,7 +207,7 @@ function runSimulation() {
             else if (array6[num8] < array6[kIdx] && num8 != kIdx) { num9=num8; num8=kIdx; }
             else if (array6[num9] < array6[kIdx] && num9 != kIdx) { num9=kIdx; }
 
-            if (c4 && Math.random() > 0.5) {
+            if (c4) {
                 let currentAlive = array4.slice(num13 + 1);
                 if (currentAlive.length >= 2) {
                     let e1Idx = currentAlive[Math.floor(Math.random() * currentAlive.length)];
