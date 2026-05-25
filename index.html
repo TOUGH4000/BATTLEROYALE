@@ -24,6 +24,7 @@
         button:hover { background: #d1d1d1; }
         #textBox2 { background: white; color: black; height: 450px; }
         .main-editor { height: 180px !important; }
+        .current-target { border: 2px solid #0078d7 !important; }
 
         @media screen and (max-width: 768px) {
             .row {
@@ -141,8 +142,8 @@ function updateActiveLine(el) {
     document.getElementById('activeInfo').innerText = `選択: ${categoryName} [${currentLineNum + 1}行目]`;
     
     const isMeibo = (el.id === 'textBox1');
-    document.getElementById('deathUrlArea').style.visibility = isMeibo ? 'visible' : 'hidden';
     document.getElementById('killUrlArea').style.visibility = isMeibo ? 'visible' : 'hidden';
+    document.getElementById('deathUrlArea').style.visibility = isMeibo ? 'visible' : 'hidden';
 
     if (!storage[currentTargetId][currentLineNum]) {
         storage[currentTargetId][currentLineNum] = { normal: [], kill: [], death: [] };
@@ -179,23 +180,28 @@ function getRandUrl(category, lineIdx, type = 'normal') {
 
 function moveUrlEditor(activeElement) {
     const urlEditor = document.getElementById('urlEditorWindow');
-    const pcContainer = document.getElementById('urlEditorContainer');
+    const container = document.getElementById('urlEditorContainer');
+    const editorGroup = document.getElementById('editorGroupRow');
     
     if (window.innerWidth <= 768) {
         if (activeElement) {
-            const targetCol = activeElement.parentNode;
-            if (urlEditor.parentNode !== targetCol) {
-                targetCol.appendChild(urlEditor);
-            }
-        } else {
-            const defaultCol = document.getElementById('textBox1').parentNode;
-            if (urlEditor.parentNode !== defaultCol) {
-                defaultCol.appendChild(urlEditor);
+            const col = activeElement.parentNode;
+            const row = col.parentNode;
+            const nextCol = col.nextElementSibling;
+            
+            if (nextCol) {
+                if (urlEditor.nextElementSibling !== nextCol) {
+                    row.insertBefore(urlEditor, nextCol);
+                }
+            } else {
+                if (urlEditor.parentNode !== row || urlEditor.nextElementSibling !== null) {
+                    row.appendChild(urlEditor);
+                }
             }
         }
     } else {
-        if (urlEditor.parentNode !== pcContainer) {
-            pcContainer.appendChild(urlEditor);
+        if (urlEditor.parentNode !== container) {
+            container.appendChild(urlEditor);
         }
     }
 }
