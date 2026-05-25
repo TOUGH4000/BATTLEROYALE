@@ -47,19 +47,14 @@
         }
 
         #secretBtn {
-            position: fixed;
-            bottom: 30px;
-            right: 20px;
-            width: 45px;
-            height: 45px;
             background: transparent;
             border: none;
-            color: #aaa;
+            color: #dfdfdf;
             cursor: pointer;
-            font-size: 24px;
-            z-index: 9999;
-            -webkit-tap-highlight-color: transparent;
+            font-size: 14px;
+            padding: 0 5px;
             outline: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         #secretPage {
@@ -144,7 +139,8 @@
             </div>
             <div class="col">
                 <div class="panel">
-                    <label style="border:none; background:none;">設定項目</label><br><br>
+                    <label style="border:none; background:none;">設定項目</label>
+                    <button id="secretBtn" onclick="toggleSecretPage()">?</button><br><br>
                     <input type="checkbox" id="checkBox1" checked> 主催戦あり<br>
                     <input type="checkbox" id="checkBox2" checked> ランダム主催者<br>
                     <input type="checkbox" id="checkBox3" checked> 死因の適用<br>
@@ -157,8 +153,6 @@
         </div>
     </div>
 </div>
-
-<button id="secretBtn" onclick="toggleSecretPage()">?</button>
 
 <div id="secretPage">マネモブくん！
 ここでとっておきの情報だよ。
