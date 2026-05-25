@@ -24,7 +24,6 @@
         button:hover { background: #d1d1d1; }
         #textBox2 { background: white; color: black; height: 450px; }
         .main-editor { height: 180px !important; }
-        .current-target { border: 2px solid #0078d7 !important; }
 
         @media screen and (max-width: 768px) {
             .row {
@@ -142,8 +141,8 @@ function updateActiveLine(el) {
     document.getElementById('activeInfo').innerText = `選択: ${categoryName} [${currentLineNum + 1}行目]`;
     
     const isMeibo = (el.id === 'textBox1');
-    document.getElementById('deathUrlArea').style.display = isMeibo ? 'block' : 'none';
-    document.getElementById('killUrlArea').style.display = isMeibo ? 'block' : 'none';
+    document.getElementById('deathUrlArea').style.visibility = isMeibo ? 'visible' : 'hidden';
+    document.getElementById('killUrlArea').style.visibility = isMeibo ? 'visible' : 'hidden';
 
     if (!storage[currentTargetId][currentLineNum]) {
         storage[currentTargetId][currentLineNum] = { normal: [], kill: [], death: [] };
@@ -180,17 +179,24 @@ function getRandUrl(category, lineIdx, type = 'normal') {
 
 function moveUrlEditor(activeElement) {
     const urlEditor = document.getElementById('urlEditorWindow');
-    const container = document.getElementById('urlEditorContainer');
-    const editorGroup = document.getElementById('editorGroupRow');
+    const pcContainer = document.getElementById('urlEditorContainer');
     
     if (window.innerWidth <= 768) {
         if (activeElement) {
-            activeElement.parentNode.parentNode.insertBefore(urlEditor, activeElement.parentNode.nextSibling);
+            const targetCol = activeElement.parentNode;
+            if (urlEditor.parentNode !== targetCol) {
+                targetCol.appendChild(urlEditor);
+            }
         } else {
-            editorGroup.appendChild(urlEditor);
+            const defaultCol = document.getElementById('textBox1').parentNode;
+            if (urlEditor.parentNode !== defaultCol) {
+                defaultCol.appendChild(urlEditor);
+            }
         }
     } else {
-        container.appendChild(urlEditor);
+        if (urlEditor.parentNode !== pcContainer) {
+            pcContainer.appendChild(urlEditor);
+        }
     }
 }
 
