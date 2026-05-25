@@ -15,7 +15,8 @@
         input[type="text"] { border: 1px solid #7a7a7a; padding: 2px; }
         .panel { border: 1px solid #b0b0b0; padding: 8px; background: #e8e8e8; height: 100%; }
         
-        #urlEditorWindow { background: #f0f0f0; border: 2px solid #7a7a7a; padding: 10px; flex: 0 0 300px; display: flex; flex-direction: column; gap: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+        #urlEditorContainer { flex: 0 0 300px; }
+        #urlEditorWindow { background: #f0f0f0; border: 2px solid #7a7a7a; padding: 10px; display: flex; flex-direction: column; gap: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
         .url-box { height: 80px !important; width: 100%; }
         .active-line-info { background: #333; color: #fff; padding: 3px 8px; font-weight: bold; margin-bottom: 5px; }
 
@@ -32,13 +33,16 @@
             .col {
                 width: 100%;
             }
+            .window {
+                padding: 0;
+            }
+            #urlEditorContainer {
+                display: none;
+            }
             #urlEditorWindow {
                 flex: none;
                 width: 100%;
-                margin-top: 5px;
-            }
-            .window {
-                padding: 0;
+                margin: 5px 0 15px 0;
             }
         }
     </style>
@@ -46,9 +50,9 @@
 <body>
 
 <div class="window">
-    <div class="row" id="mainTopRow">
+    <div class="row">
         <div class="col" style="flex: 3;">
-            <div class="row">
+            <div class="row" id="editorGroupRow">
                 <div class="col">
                     <label>名簿</label>
                     <textarea id="textBox1" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">太郎,1
@@ -76,19 +80,21 @@
             </div>
         </div>
 
-        <div id="urlEditorWindow">
-            <div class="active-line-info" id="activeInfo">選択中の行: なし</div>
-            
-            <div id="normalUrlArea">
-                <label style="display:block; border:none; background:none;">通常時の画像URL (最大30)</label>
-                <textarea id="urlNormal" class="url-box" placeholder="1行に1つURLを入力" oninput="saveUrls()"></textarea>
+        <div id="urlEditorContainer">
+            <div id="urlEditorWindow">
+                <div class="active-line-info" id="activeInfo">選択中の行: なし</div>
+                
+                <div id="normalUrlArea">
+                    <label style="display:block; border:none; background:none;">通常時の画像URL (最大30)</label>
+                    <textarea id="urlNormal" class="url-box" placeholder="1行に1つURLを入力" oninput="saveUrls()"></textarea>
+                </div>
+                
+                <div id="deathUrlArea">
+                    <label style="display:block; border:none; background:none;">死亡時の画像URL (キャラのみ)</label>
+                    <textarea id="urlDeath" class="url-box" placeholder="殺害された時のみ表示" oninput="saveUrls()"></textarea>
+                </div>
+                <div style="font-size: 10px; color: #666;">※上のリストの行を選択すると切り替わります</div>
             </div>
-            
-            <div id="deathUrlArea">
-                <label style="display:block; border:none; background:none;">死亡時の画像URL (キャラのみ)</label>
-                <textarea id="urlDeath" class="url-box" placeholder="殺害された時のみ表示" oninput="saveUrls()"></textarea>
-            </div>
-            <div style="font-size: 10px; color: #666;">※上のリストの行を選択すると切り替わります</div>
         </div>
     </div>
 
@@ -122,8 +128,6 @@ let storage = {
 let currentTargetId = '';
 let currentLineNum = -1;
 
-const mq = window.matchMedia("(max-width: 768px)");
-
 function updateActiveLine(el) {
     currentTargetId = el.id;
     const textBeforeCursor = el.value.substr(0, el.selectionStart);
@@ -139,25 +143,8 @@ function updateActiveLine(el) {
     document.getElementById('urlNormal').value = storage[currentTargetId][currentLineNum].normal.join('\n');
     document.getElementById('urlDeath').value = storage[currentTargetId][currentLineNum].death.join('\n');
 
-    const urlWindow = document.getElementById('urlEditorWindow');
-    if (mq.matches) {
-        el.parentNode.appendChild(urlWindow);
-    } else {
-        document.getElementById('mainTopRow').appendChild(urlWindow);
-    }
+    moveUrlEditor(el);
 }
-
-mq.addEventListener("change", function(e) {
-    const urlWindow = document.getElementById('urlEditorWindow');
-    if (e.matches) {
-        if (currentTargetId) {
-            const activeEl = document.getElementById(currentTargetId);
-            if (activeEl) activeEl.parentNode.appendChild(urlWindow);
-        }
-    } else {
-        document.getElementById('mainTopRow').appendChild(urlWindow);
-    }
-});
 
 function saveUrls() {
     if (currentTargetId === '' || currentLineNum === -1) return;
@@ -173,6 +160,29 @@ function getRandUrl(category, lineIdx, isDeath = false) {
     if (!pool || pool.length === 0) return "";
     return pool[Math.floor(Math.random() * pool.length)];
 }
+
+function moveUrlEditor(activeElement) {
+    const urlEditor = document.getElementById('urlEditorWindow');
+    const container = document.getElementById('urlEditorContainer');
+    const editorGroup = document.getElementById('editorGroupRow');
+    
+    if (window.innerWidth <= 768) {
+        if (activeElement) {
+            activeElement.parentNode.parentNode.insertBefore(urlEditor, activeElement.parentNode.nextSibling);
+        } else {
+            editorGroup.appendChild(urlEditor);
+        }
+    } else {
+        container.appendChild(urlEditor);
+    }
+}
+
+window.addEventListener('resize', () => {
+    const activeElement = currentTargetId ? document.getElementById(currentTargetId) : null;
+    moveUrlEditor(activeElement);
+});
+
+moveUrlEditor(null);
 
 function runSimulation() {
     const log = document.getElementById('textBox2');
