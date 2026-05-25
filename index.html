@@ -2,14 +2,16 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>風のバトロワシミュレーター</title>
     <style>
+        * { box-sizing: border-box; }
         body { font-family: "MS UI Gothic", sans-serif; background: #f0f0f0; font-size: 12px; margin: 0; padding: 10px; }
-        .window { width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+        .window { width: 100%; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
         .row { display: flex; gap: 10px; }
         .col { display: flex; flex-direction: column; gap: 5px; flex: 1; }
         label { font-weight: bold; background: #dcdcdc; padding: 2px 5px; border: 1px solid #7a7a7a; }
-        textarea { font-family: "MS UI Gothic", monospace; font-size: 12px; resize: none; border: 1px solid #7a7a7a; padding: 5px; background: white; }
+        textarea { font-family: "MS UI Gothic", monospace; font-size: 12px; resize: none; border: 1px solid #7a7a7a; padding: 5px; background: white; width: 100%; }
         input[type="text"] { border: 1px solid #7a7a7a; padding: 2px; }
         .panel { border: 1px solid #b0b0b0; padding: 8px; background: #e8e8e8; height: 100%; }
         
@@ -22,6 +24,22 @@
         #textBox2 { background: white; color: black; height: 450px; }
         .main-editor { height: 180px !important; }
         .current-target { border: 2px solid #0078d7 !important; }
+
+        @media screen and (max-width: 768px) {
+            .row {
+                flex-direction: column;
+            }
+            .col {
+                width: 100%;
+            }
+            #urlEditorWindow {
+                flex: none;
+                width: 100%;
+            }
+            .window {
+                padding: 0;
+            }
+        }
     </style>
 </head>
 <body>
