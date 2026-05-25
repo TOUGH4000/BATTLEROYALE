@@ -10,17 +10,17 @@
         .window { width: 100%; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
         .row { display: flex; gap: 10px; }
         .col { display: flex; flex-direction: column; gap: 5px; flex: 1; }
-        label { font-weight: bold; background: #dcdcdc; padding: 2px 5px; border: 1px solid #7a7a7a; }
+        label { background: #dcdcdc; padding: 2px 5px; border: 1px solid #7a7a7a; }
         textarea { font-family: "MS UI Gothic", monospace; font-size: 12px; resize: none; border: 1px solid #7a7a7a; padding: 5px; background: white; width: 100%; }
         input[type="text"] { border: 1px solid #7a7a7a; padding: 2px; }
         .panel { border: 1px solid #b0b0b0; padding: 8px; background: #e8e8e8; height: 100%; }
         
         #urlEditorContainer { flex: 0 0 300px; }
         #urlEditorWindow { background: #f0f0f0; border: 2px solid #7a7a7a; padding: 10px; display: flex; flex-direction: column; gap: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
-        .url-box { height: 80px !important; width: 100%; }
-        .active-line-info { background: #333; color: #fff; padding: 3px 8px; font-weight: bold; margin-bottom: 5px; }
+        .url-box { height: 60px !important; width: 100%; }
+        .active-line-info { background: #333; color: #fff; padding: 3px 8px; margin-bottom: 5px; }
 
-        button { padding: 8px 20px; cursor: pointer; background: #e1e1e1; border: 1px solid #7a7a7a; font-weight: bold; }
+        button { padding: 8px 20px; cursor: pointer; background: #e1e1e1; border: 1px solid #7a7a7a; }
         button:hover { background: #d1d1d1; }
         #textBox2 { background: white; color: black; height: 450px; }
         .main-editor { height: 180px !important; }
@@ -89,6 +89,11 @@
                     <textarea id="urlNormal" class="url-box" placeholder="1行に1つURLを入力" oninput="saveUrls()"></textarea>
                 </div>
                 
+                <div id="killUrlArea">
+                    <label style="display:block; border:none; background:none;">殺害時の画像URL (キャラのみ)</label>
+                    <textarea id="urlKill" class="url-box" placeholder="他キャラを殺害した時のみ表示" oninput="saveUrls()"></textarea>
+                </div>
+
                 <div id="deathUrlArea">
                     <label style="display:block; border:none; background:none;">死亡時の画像URL (キャラのみ)</label>
                     <textarea id="urlDeath" class="url-box" placeholder="殺害された時のみ表示" oninput="saveUrls()"></textarea>
@@ -135,12 +140,16 @@ function updateActiveLine(el) {
     
     const categoryName = {"textBox1":"名簿", "textBox8":"死因", "textBox11":"イベント"}[el.id];
     document.getElementById('activeInfo').innerText = `選択: ${categoryName} [${currentLineNum + 1}行目]`;
-    document.getElementById('deathUrlArea').style.visibility = (el.id === 'textBox1') ? 'visible' : 'hidden';
+    
+    const isMeibo = (el.id === 'textBox1');
+    document.getElementById('deathUrlArea').style.display = isMeibo ? 'block' : 'none';
+    document.getElementById('killUrlArea').style.display = isMeibo ? 'block' : 'none';
 
     if (!storage[currentTargetId][currentLineNum]) {
-        storage[currentTargetId][currentLineNum] = { normal: [], death: [] };
+        storage[currentTargetId][currentLineNum] = { normal: [], kill: [], death: [] };
     }
     document.getElementById('urlNormal').value = storage[currentTargetId][currentLineNum].normal.join('\n');
+    document.getElementById('urlKill').value = (storage[currentTargetId][currentLineNum].kill || []).join('\n');
     document.getElementById('urlDeath').value = storage[currentTargetId][currentLineNum].death.join('\n');
 
     moveUrlEditor(el);
@@ -149,14 +158,22 @@ function updateActiveLine(el) {
 function saveUrls() {
     if (currentTargetId === '' || currentLineNum === -1) return;
     const normalVal = document.getElementById('urlNormal').value.split('\n').filter(u => u.trim().startsWith('http')).slice(0, 30);
+    const killVal = document.getElementById('urlKill').value.split('\n').filter(u => u.trim().startsWith('http')).slice(0, 30);
     const deathVal = document.getElementById('urlDeath').value.split('\n').filter(u => u.trim().startsWith('http')).slice(0, 30);
-    storage[currentTargetId][currentLineNum] = { normal: normalVal, death: deathVal };
+    storage[currentTargetId][currentLineNum] = { normal: normalVal, kill: killVal, death: deathVal };
 }
 
-function getRandUrl(category, lineIdx, isDeath = false) {
+function getRandUrl(category, lineIdx, type = 'normal') {
     const data = storage[category][lineIdx];
     if (!data) return "";
-    let pool = isDeath ? (data.death.length > 0 ? data.death : data.normal) : data.normal;
+    let pool = data.normal;
+    
+    if (type === 'death' && data.death && data.death.length > 0) {
+        pool = data.death;
+    } else if (type === 'kill' && data.kill && data.kill.length > 0) {
+        pool = data.kill;
+    }
+    
     if (!pool || pool.length === 0) return "";
     return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -244,11 +261,11 @@ function runSimulation() {
 
             if (!c2) {
                 log.value += v.name + " が " + k.name + " に 殺されました\n";
-                urlLine = (getRandUrl('textBox1', vIdx, true) + " " + getRandUrl('textBox1', kIdx)).trim();
+                urlLine = (getRandUrl('textBox1', vIdx, 'death') + " " + getRandUrl('textBox1', kIdx, 'kill')).trim();
             } else {
                 let causeIdx = Math.floor(Math.random() * satsugaiLines.length);
                 log.value += v.name + " は " + k.name + satsugaiLines[causeIdx] + "\n";
-                urlLine = (getRandUrl('textBox1', vIdx, true) + " " + getRandUrl('textBox1', kIdx) + " " + getRandUrl('textBox8', causeIdx)).trim();
+                urlLine = (getRandUrl('textBox1', vIdx, 'death') + " " + getRandUrl('textBox1', kIdx, 'kill') + " " + getRandUrl('textBox8', causeIdx)).trim();
             }
             if (urlLine) log.value += urlLine + "\n";
             
@@ -310,12 +327,12 @@ function runSimulation() {
             let p = array[pIdx];
             if (Math.random() < 0.33) {
                 log.value += "主催者" + orgName + " が " + p.name + " に 殺されました\n";
-                let urlLine = (getRandUrl('textBox1', organizerIdx, true) + " " + getRandUrl('textBox1', pIdx)).trim();
+                let urlLine = (getRandUrl('textBox1', organizerIdx, 'death') + " " + getRandUrl('textBox1', pIdx, 'kill')).trim();
                 if (urlLine) log.value += urlLine + "\n";
                 break; 
             } else {
                 log.value += p.name + "は主催者" + orgName + "に殺されました\n";
-                let urlLine = (getRandUrl('textBox1', pIdx, true) + " " + getRandUrl('textBox1', organizerIdx)).trim();
+                let urlLine = (getRandUrl('textBox1', pIdx, 'death') + " " + getRandUrl('textBox1', organizerIdx, 'kill')).trim();
                 if (urlLine) log.value += urlLine + "\n";
                 num13++; 
             }
