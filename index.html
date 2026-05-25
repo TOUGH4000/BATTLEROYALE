@@ -45,82 +45,171 @@
                 margin: 5px 0 15px 0;
             }
         }
+
+        #secretBtn {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 9999;
+        }
+
+        #secretPage {
+            display: none;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #7a7a7a;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        .return-btn-container {
+            margin-top: 30px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
-<div class="window">
-    <div class="row">
-        <div class="col" style="flex: 3;">
-            <div class="row" id="editorGroupRow">
-                <div class="col">
-                    <label>名簿</label>
-                    <textarea id="textBox1" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">太郎,1
+<div id="mainContent">
+    <div class="window">
+        <div class="row">
+            <div class="col" style="flex: 3;">
+                <div class="row" id="editorGroupRow">
+                    <div class="col">
+                        <label>名簿</label>
+                        <textarea id="textBox1" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">太郎,1
 次郎,0
 三郎,2
 シロウ,1
 五郎,3
 六郎,1
 七太郎,1</textarea>
-                </div>
-                <div class="col">
-                    <label>死因</label>
-                    <textarea id="textBox8" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">に撲殺されました
+                    </div>
+                    <div class="col">
+                        <label>死因</label>
+                        <textarea id="textBox8" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">に撲殺されました
 に暗殺されました
 に斬殺されました
 に毒殺されました
 に焼殺されました</textarea>
-                </div>
-                <div class="col">
-                    <label>イベント</label>
-                    <textarea id="textBox11" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">が接触し情報を共有しました
+                    </div>
+                    <div class="col">
+                        <label>イベント</label>
+                        <textarea id="textBox11" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">が接触し情報を共有しました
 は疑心暗鬼になり分裂してしまいました
 は行動をともにし仲を深めました</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div id="urlEditorContainer">
+                <div id="urlEditorWindow">
+                    <div class="active-line-info" id="activeInfo">選択中の行: なし</div>
+                    
+                    <div id="normalUrlArea">
+                        <label style="display:block; border:none; background:none;">通常時の画像URL (最大30)</label>
+                        <textarea id="urlNormal" class="url-box" placeholder="1行に1つURLを入力" oninput="saveUrls()"></textarea>
+                    </div>
+                    
+                    <div id="killUrlArea">
+                        <label style="display:block; border:none; background:none;">殺害時の画像URL (キャラのみ)</label>
+                        <textarea id="urlKill" class="url-box" placeholder="他キャラを殺害した時のみ表示" oninput="saveUrls()"></textarea>
+                    </div>
+
+                    <div id="deathUrlArea">
+                        <label style="display:block; border:none; background:none;">死亡時の画像URL (キャラのみ)</label>
+                        <textarea id="urlDeath" class="url-box" placeholder="殺害された時のみ表示" oninput="saveUrls()"></textarea>
+                    </div>
+                    <div style="font-size: 10px; color: #666;">※上のリストの行を選択すると切り替わります</div>
                 </div>
             </div>
         </div>
 
-        <div id="urlEditorContainer">
-            <div id="urlEditorWindow">
-                <div class="active-line-info" id="activeInfo">選択中の行: なし</div>
-                
-                <div id="normalUrlArea">
-                    <label style="display:block; border:none; background:none;">通常時の画像URL (最大30)</label>
-                    <textarea id="urlNormal" class="url-box" placeholder="1行に1つURLを入力" oninput="saveUrls()"></textarea>
+        <div class="row">
+            <div class="col" style="flex: 2;">
+                <label>実行ログ</label>
+                <textarea id="textBox2" readonly></textarea>
+            </div>
+            <div class="col">
+                <div class="panel">
+                    <label style="border:none; background:none;">設定項目</label><br><br>
+                    <input type="checkbox" id="checkBox1" checked> 主催戦あり<br>
+                    <input type="checkbox" id="checkBox2" checked> ランダム主催者<br>
+                    <input type="checkbox" id="checkBox3" checked> 死因の適用<br>
+                    <input type="checkbox" id="checkBox4" checked> その他イベント<br>
+                    <input type="checkbox" id="checkBox5" checked> 好戦度の適用<br><br>
+                    主催者名: <input type="text" id="textBox4" value="疾風の春草"><br><br>
+                    <button onclick="runSimulation()">ロワ開始</button>
                 </div>
-                
-                <div id="killUrlArea">
-                    <label style="display:block; border:none; background:none;">殺害時の画像URL (キャラのみ)</label>
-                    <textarea id="urlKill" class="url-box" placeholder="他キャラを殺害した時のみ表示" oninput="saveUrls()"></textarea>
-                </div>
-
-                <div id="deathUrlArea">
-                    <label style="display:block; border:none; background:none;">死亡時の画像URL (キャラのみ)</label>
-                    <textarea id="urlDeath" class="url-box" placeholder="殺害された時のみ表示" oninput="saveUrls()"></textarea>
-                </div>
-                <div style="font-size: 10px; color: #666;">※上のリストの行を選択すると切り替わります</div>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="row">
-        <div class="col" style="flex: 2;">
-            <label>実行ログ</label>
-            <textarea id="textBox2" readonly></textarea>
-        </div>
-        <div class="col">
-            <div class="panel">
-                <label style="border:none; background:none;">設定項目</label><br><br>
-                <input type="checkbox" id="checkBox1" checked> 主催戦あり<br>
-                <input type="checkbox" id="checkBox2" checked> ランダム主催者<br>
-                <input type="checkbox" id="checkBox3" checked> 死因の適用<br>
-                <input type="checkbox" id="checkBox4" checked> その他イベント<br>
-                <input type="checkbox" id="checkBox5" checked> 好戦度の適用<br><br>
-                主催者名: <input type="text" id="textBox4" value="疾風の春草"><br><br>
-                <button onclick="runSimulation()">ロワ開始</button>
-            </div>
-        </div>
-    </div>
+<button id="secretBtn" onclick="toggleSecretPage()">?</button>
+
+<div id="secretPage">マネモブくん！
+ここでとっておきの情報だよ。
+このシミュレーターには特殊コマンドがあるんだ。
+イベントや死因の行末に記載すると機能するようになるよ！
+
+コマンドその1
+/1
+※死因とイベントの両方で使用可能
+効果：そのイベントが1人イベントとして登録される
+入力例：はジアースで戦った結果死にました/1
+出力例：円堂 はジアースで戦った結果死にました
+
+コマンドその2
+/3
+※イベントのみで使用可能
+効果：そのイベントが3人イベントとして登録される
+入力例：はイナズマブレイクを放ちました/3
+出力例：円堂 と 豪炎寺 と 鬼道はイナズマブレイクを放ちました
+
+コマンドその3
+/4
+※イベントのみで使用可能
+効果：そのイベントが4人イベントとして登録される
+入力例：はラストリゾートΣを発動させました/4
+出力例：明日人 と 灰崎 と 野坂 と 一星はラストリゾートΣを発動させました
+
+コマンドその4
+/5
+※イベントのみで使用可能
+効果：そのイベントが5人イベントとして登録される
+入力例：はゴレンジャイを結成しました/5
+出力例：ジュウオウイーグル と ゴーカイレッド と アカニンジャー と サソリオレンジ と トッキュウ5号はゴレンジャイを結成しました
+
+コマンドその5
+/12
+※死因のみで使用可能
+効果：そのイベントが3人イベントとして登録され、殺害側が2人となる
+入力例：にツインブーストFで殺されました/12
+出力例：ポセイドン は 鬼道 と 豪炎寺にツインブーストFで殺されました
+
+コマンドその6
+/13
+※死因のみで使用可能
+効果：そのイベントが4人イベントとして登録され、殺害側が3人となる
+入力例：にイナズマ1号落としで殺されました/13
+出力例：源田 は 円堂 と 豪炎寺 と 壁山にイナズマ1号落としで殺されました
+
+ここまでと同じように/14、/21、/31、/41も特殊コマンドとして存在しているから試してみろ…鬼龍のように
+
+<div class="return-btn-container">
+<button onclick="toggleSecretPage()">元の画面へ帰還する</button>
+</div>
 </div>
 
 <script>
@@ -132,6 +221,19 @@ let storage = {
 
 let currentTargetId = '';
 let currentLineNum = -1;
+
+function toggleSecretPage() {
+    const mainContent = document.getElementById('mainContent');
+    const secretPage = document.getElementById('secretPage');
+    if (mainContent.style.display === 'none') {
+        mainContent.style.display = 'block';
+        secretPage.style.display = 'none';
+    } else {
+        mainContent.style.display = 'none';
+        secretPage.style.display = 'block';
+        window.scrollTo(0, 0);
+    }
+}
 
 function updateActiveLine(el) {
     currentTargetId = el.id;
