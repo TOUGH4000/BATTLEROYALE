@@ -53,6 +53,7 @@
             cursor: pointer;
             font-size: 14px;
             padding: 0 5px;
+            margin-left: 5px;
             outline: none;
             -webkit-tap-highlight-color: transparent;
         }
@@ -139,8 +140,11 @@
             </div>
             <div class="col">
                 <div class="panel">
-                    <label style="border:none; background:none;">設定項目</label>
-                    <button id="secretBtn" onclick="toggleSecretPage()">?</button><br><br>
+                    <div style="display: flex; align-items: center;">
+                        <label style="border:none; background:none; padding:0; margin:0;">設定項目</label>
+                        <button id="secretBtn" onclick="toggleSecretPage()">?</button>
+                    </div>
+                    <br>
                     <input type="checkbox" id="checkBox1" checked> 主催戦あり<br>
                     <input type="checkbox" id="checkBox2" checked> ランダム主催者<br>
                     <input type="checkbox" id="checkBox3" checked> 死因の適用<br>
