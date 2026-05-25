@@ -160,7 +160,7 @@
 
 <div id="secretPage">マネモブくん！
 ここでとっておきの情報だよ。
-このシミュレーターには特殊コマンドがあるみたいだ。
+このシミュレーターには特殊コマンドがあるんだ。
 イベントや死因の行末に記載すると機能するようになるよ！
 
 コマンドその1
@@ -259,9 +259,9 @@ function updateActiveLine(el) {
 
 function saveUrls() {
     if (currentTargetId === '' || currentLineNum === -1) return;
-    const normalVal = document.getElementById('urlNormal').value.split('\n').filter(u => u.trim().startsWith('http')).slice(0, 30);
-    const killVal = document.getElementById('urlKill').value.split('\n').filter(u => u.trim().startsWith('http')).slice(0, 30);
-    const deathVal = document.getElementById('urlDeath').value.split('\n').filter(u => u.trim().startsWith('http')).slice(0, 30);
+    const normalVal = document.getElementById('urlNormal').value.split('\n').map(u => u.trim()).filter(u => u.startsWith('http')).slice(0, 30);
+    const killVal = document.getElementById('urlKill').value.split('\n').map(u => u.trim()).filter(u => u.startsWith('http')).slice(0, 30);
+    const deathVal = document.getElementById('urlDeath').value.split('\n').map(u => u.trim()).filter(u => u.startsWith('http')).slice(0, 30);
     storage[currentTargetId][currentLineNum] = { normal: normalVal, kill: killVal, death: deathVal };
 }
 
@@ -317,9 +317,9 @@ moveUrlEditor(null);
 
 function runSimulation() {
     const log = document.getElementById('textBox2');
-    const meiboLines = document.getElementById('textBox1').value.split('\n').filter(l => l.trim() !== "");
-    const satsugaiLines = document.getElementById('textBox8').value.split('\n').filter(l => l.trim() !== "");
-    const eventLines = document.getElementById('textBox11').value.split('\n').filter(l => l.trim() !== "");
+    const meiboLines = document.getElementById('textBox1').value.split('\n').map(l => l.trim()).filter(l => l !== "");
+    const satsugaiLines = document.getElementById('textBox8').value.split('\n').map(l => l.trim()).filter(l => l !== "");
+    const eventLines = document.getElementById('textBox11').value.split('\n').map(l => l.trim()).filter(l => l !== "");
     
     log.value = "";
     if (meiboLines.length === 0) return;
@@ -371,7 +371,7 @@ function runSimulation() {
             if (c2 && satsugaiLines.length > 0) {
                 for (let idx = 0; idx < satsugaiLines.length; idx++) {
                     let line = satsugaiLines[idx];
-                    let match = line.match(/\/(1|12|13|14|21|31|41)$/);
+                    let match = line.match(/[\/／](1|12|13|14|21|31|41)$/);
                     let nV = 1, nK = 1;
                     if (match) {
                         let cmd = match[1];
@@ -401,7 +401,7 @@ function runSimulation() {
                 numK = picked.nK;
                 causeIdx = picked.origIdx;
                 
-                let match = causeLine.match(/\/(1|12|13|14|21|31|41)$/);
+                let match = causeLine.match(/[\/／](1|12|13|14|21|31|41)$/);
                 if (match) {
                     causeLine = causeLine.substring(0, causeLine.length - match[0].length);
                 }
@@ -460,7 +460,7 @@ function runSimulation() {
                 let validEvents = [];
                 for (let idx = 0; idx < eventLines.length; idx++) {
                     let line = eventLines[idx];
-                    let match = line.match(/\/(1|3|4|5)$/);
+                    let match = line.match(/[\/／](1|3|4|5)$/);
                     let nA = 2;
                     if (match) {
                         let cmd = match[1];
@@ -480,7 +480,7 @@ function runSimulation() {
                     let numA = picked.nA;
                     let evIdx = picked.origIdx;
 
-                    let match = evLine.match(/\/(1|3|4|5)$/);
+                    let match = evLine.match(/[\/／](1|3|4|5)$/);
                     if (match) {
                         evLine = evLine.substring(0, evLine.length - match[0].length);
                     }
