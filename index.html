@@ -209,7 +209,7 @@
 コマンドその7
 /S1〜/S10
 ※イベントのみで使用可能
-効果：そのイベントで一緒に行動したキャラクター同士の「信頼度」が設定された数値分上昇する、/3/S5 や /S5/3 のように、人数変更コマンド（/1、/3、/4、/5）と同時に記述することも可能
+効果：そのイベントで一緒に行動したキャラクター同士の「信頼度」が設定された数値分上昇する、/3/S5や/S5/3のように、人数変更コマンド（/1、/3、/4、/5）と同時に記述することも可能
 
 ここまでと同じように/14、/21、/31、/41も特殊コマンドとして存在しているから試してみろ…鬼龍のように
 
@@ -334,7 +334,7 @@ function runSimulation() {
     let array = []; 
     let array4 = []; 
     let array6 = new Array(num).fill(0); 
-    let array7 = Array.from({length: 6}, () => []); 
+    let array7 = []; 
 
     let num7=0, num8=0, num9=0, num12=1, num13=0, num14=0;
 
@@ -352,8 +352,15 @@ function runSimulation() {
         let parts = line.split(',');
         let name = parts[0].trim();
         let aggro = parts[1] ? parseInt(parts[1]) : 0;
+        
+        if (isNaN(aggro)) aggro = 0;
+        if (aggro < 0) aggro = 0;
+        if (aggro > 999) aggro = 999;
+        
         array[i] = { name: name, aggro: aggro, originalIdx: i };
-        if (aggro >= 0 && aggro <= 5) array7[aggro].push(i);
+        
+        if (!array7[aggro]) array7[aggro] = [];
+        array7[aggro].push(i);
     });
 
     let indices = Array.from({length: num}, (_, i) => i);
