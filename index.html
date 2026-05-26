@@ -149,7 +149,8 @@
                     <input type="checkbox" id="checkBox2" checked> ランダム主催者<br>
                     <input type="checkbox" id="checkBox3" checked> 死因の適用<br>
                     <input type="checkbox" id="checkBox4" checked> その他イベント<br>
-                    <input type="checkbox" id="checkBox5" checked> 好戦度の適用<br><br>
+                    <input type="checkbox" id="checkBox5" checked> 好戦度の適用<br>
+                    <input type="checkbox" id="checkBox6" checked> 信頼度システム<br><br>
                     主催者名: <input type="text" id="textBox4" value="疾風の春草"><br><br>
                     <button onclick="runSimulation()">ロワ開始</button>
                 </div>
@@ -160,7 +161,7 @@
 
 <div id="secretPage">マネモブくん！
 ここでとっておきの情報だよ。
-このシミュレーターには特殊コマンドがあるんだ。
+このシミュレーターには特殊コマンドがあるみたいだ。
 イベントや死因の行末に記載すると機能するようになるよ！
 
 コマンドその1
@@ -204,6 +205,11 @@
 効果：そのイベントが4人イベントとして登録され、殺害側が3人となる
 入力例：にイナズマ1号落としで殺されました/13
 出力例：源田 は 円堂 と 豪炎寺 と 壁山にイナズマ1号落としで殺されました
+
+コマンドその7
+/S1〜/S10
+※イベントのみで使用可能
+効果：そのイベントで一緒に行動したキャラクター同士の「信頼度」が設定された数値分上昇する、/3/S5 や /S5/3 のように、人数変更コマンド（/1、/3、/4、/5）と同時に記述することも可能
 
 ここまでと同じように/14、/21、/31、/41も特殊コマンドとして存在しているから試してみろ…鬼龍のように
 
@@ -337,7 +343,10 @@ function runSimulation() {
     const c2 = document.getElementById('checkBox3').checked; 
     const c4 = document.getElementById('checkBox4').checked; 
     const c5 = document.getElementById('checkBox5').checked; 
+    const c6 = document.getElementById('checkBox6').checked; 
     const isRandOrg = document.getElementById('checkBox2').checked;
+
+    let trustMatrix = Array.from({length: num}, () => ({}));
 
     meiboLines.forEach((line, i) => {
         let parts = line.split(',');
@@ -361,6 +370,21 @@ function runSimulation() {
     }
 
     log.value += "ゲーム開始\n";
+
+    function getTrustString(vIdx) {
+        if (!c6) return "";
+        let tObj = trustMatrix[vIdx];
+        let entries = [];
+        for (let targetIdx in tObj) {
+            if (tObj[targetIdx] > 0) {
+                entries.push(tObj[targetIdx] + "→" + array[targetIdx].name);
+            }
+        }
+        if (entries.length > 0) {
+            return "（信頼度" + entries.join("、") + "）";
+        }
+        return "";
+    }
 
     function processDeaths(count) {
         let deathsCompleted = 0;
@@ -416,23 +440,70 @@ function runSimulation() {
             }
 
             let possibleKillers = array4.slice(num13 + numV);
-            possibleKillers.sort(() => Math.random() - 0.5);
-            let killers = possibleKillers.slice(0, numK);
+            let killers = [];
+
+            if (numK > 0) {
+                let pool = [...possibleKillers];
+                for (let i = 0; i < numK; i++) {
+                    if (pool.length === 0) break;
+                    let totalWeight = 0;
+                    let weights = [];
+                    for (let j = 0; j < pool.length; j++) {
+                        let pIdx = pool[j];
+                        let w = 1;
+                        if (c5) w = Math.max(1, array[pIdx].aggro + 1);
+                        if (c6) {
+                            let K_trust = victims.reduce((sum, vIdx) => sum + (trustMatrix[pIdx][vIdx] || 0), 0);
+                            if (K_trust > 0) {
+                                w = w / Math.pow(2, K_trust);
+                            }
+                        }
+                        weights.push(w);
+                        totalWeight += w;
+                    }
+                    
+                    let rand = Math.random() * totalWeight;
+                    let pickedIdx = pool.length - 1;
+                    for (let j = 0; j < pool.length; j++) {
+                        rand -= weights[j];
+                        if (rand <= 0) {
+                            pickedIdx = j;
+                            break;
+                        }
+                    }
+                    killers.push(pool.splice(pickedIdx, 1)[0]);
+                }
+            }
 
             let vNames = victims.map(idx => array[idx].name).join(" と ");
             let kNames = killers.map(idx => array[idx].name).join(" と ");
 
+            let trustSuffixes = [];
+            if (c6) {
+                victims.forEach(vIdx => {
+                    let ts = getTrustString(vIdx);
+                    if (ts) {
+                        if (victims.length > 1) {
+                            trustSuffixes.push(array[vIdx].name + "の" + ts.substring(1, ts.length - 1));
+                        } else {
+                            trustSuffixes.push(ts.substring(1, ts.length - 1));
+                        }
+                    }
+                });
+            }
+            let trustSuffixStr = trustSuffixes.length > 0 ? "（" + trustSuffixes.join("、") + "）" : "";
+
             if (!c2) {
                 if (numK > 0) {
-                    log.value += vNames + " が " + kNames + " に 殺されました\n";
+                    log.value += vNames + " が " + kNames + " に 殺されました" + trustSuffixStr + "\n";
                 } else {
-                    log.value += vNames + " が 死亡しました\n";
+                    log.value += vNames + " が 死亡しました" + trustSuffixStr + "\n";
                 }
             } else {
                 if (numK > 0) {
-                    log.value += vNames + " は " + kNames + causeLine + "\n";
+                    log.value += vNames + " は " + kNames + causeLine + trustSuffixStr + "\n";
                 } else {
-                    log.value += vNames + causeLine + "\n";
+                    log.value += vNames + causeLine + trustSuffixStr + "\n";
                 }
             }
 
@@ -460,14 +531,26 @@ function runSimulation() {
                 let validEvents = [];
                 for (let idx = 0; idx < eventLines.length; idx++) {
                     let line = eventLines[idx];
-                    let match = line.match(/[\/／](1|3|4|5)$/);
+                    let tempLine = line;
                     let nA = 2;
-                    if (match) {
-                        let cmd = match[1];
-                        if (cmd === '1') nA = 1;
-                        else if (cmd === '3') nA = 3;
-                        else if (cmd === '4') nA = 4;
-                        else if (cmd === '5') nA = 5;
+                    let parsing = true;
+                    while(parsing) {
+                        parsing = false;
+                        let mS = tempLine.match(/[\/／]S([1-9]|10)$/i);
+                        if (mS) {
+                            tempLine = tempLine.substring(0, tempLine.length - mS[0].length);
+                            parsing = true;
+                        }
+                        let mN = tempLine.match(/[\/／](1|3|4|5)$/);
+                        if (mN) {
+                            let cmd = mN[1];
+                            if (cmd === '1') nA = 1;
+                            else if (cmd === '3') nA = 3;
+                            else if (cmd === '4') nA = 4;
+                            else if (cmd === '5') nA = 5;
+                            tempLine = tempLine.substring(0, tempLine.length - mN[0].length);
+                            parsing = true;
+                        }
                     }
                     if (evAlive.length >= nA) {
                         validEvents.push({line: line, nA: nA, origIdx: idx});
@@ -480,13 +563,37 @@ function runSimulation() {
                     let numA = picked.nA;
                     let evIdx = picked.origIdx;
 
-                    let match = evLine.match(/[\/／](1|3|4|5)$/);
-                    if (match) {
-                        evLine = evLine.substring(0, evLine.length - match[0].length);
+                    let trustGain = 0;
+                    let parsing = true;
+                    while (parsing) {
+                        parsing = false;
+                        let mS = evLine.match(/[\/／]S([1-9]|10)$/i);
+                        if (mS) {
+                            trustGain = parseInt(mS[1]);
+                            evLine = evLine.substring(0, evLine.length - mS[0].length);
+                            parsing = true;
+                        }
+                        let mN = evLine.match(/[\/／](1|3|4|5)$/);
+                        if (mN) {
+                            evLine = evLine.substring(0, evLine.length - mN[0].length);
+                            parsing = true;
+                        }
                     }
 
                     evAlive.sort(() => Math.random() - 0.5);
                     let actors = evAlive.slice(0, numA);
+                    
+                    if (c6 && trustGain > 0 && numA >= 2) {
+                        for (let a1 = 0; a1 < actors.length; a1++) {
+                            for (let a2 = a1 + 1; a2 < actors.length; a2++) {
+                                let idx1 = actors[a1];
+                                let idx2 = actors[a2];
+                                trustMatrix[idx1][idx2] = (trustMatrix[idx1][idx2] || 0) + trustGain;
+                                trustMatrix[idx2][idx1] = (trustMatrix[idx2][idx1] || 0) + trustGain;
+                            }
+                        }
+                    }
+
                     let aNames = actors.map(idx => array[idx].name).join(" と ");
                     log.value += aNames + evLine + "\n";
 
@@ -554,7 +661,9 @@ function runSimulation() {
         log.value += "生還者は\n";
         let num15 = 0;
         for (let i = num13; i < num; i++) {
-            log.value += array[array4[i]].name + "\n";
+            let pIdx = array4[i];
+            let tStr = getTrustString(pIdx);
+            log.value += array[pIdx].name + tStr + "\n";
             num15++;
         }
         log.value += "以上の" + num15 + "名でした\n\n";
