@@ -6,50 +6,25 @@
     <title>風のバトロワシミュレーター</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: "MS UI Gothic", sans-serif; background: #f0f0f0; font-size: 12px; margin: 0; padding: 10px; transition: background-color 0.3s, color 0.3s; }
+        body { font-family: "MS UI Gothic", sans-serif; background: #f0f0f0; font-size: 12px; margin: 0; padding: 10px; }
         .window { width: 100%; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
         .row { display: flex; gap: 10px; }
         .col { display: flex; flex-direction: column; gap: 5px; flex: 1; }
         label { background: #dcdcdc; padding: 2px 5px; border: 1px solid #7a7a7a; }
-        textarea { font-family: "MS UI Gothic", monospace; font-size: 12px; resize: none; border: 1px solid #7a7a7a; padding: 5px; background: white; width: 100%; transition: background-color 0.3s, color 0.3s; }
-        input[type="text"] { border: 1px solid #7a7a7a; padding: 2px; transition: background-color 0.3s, color 0.3s; }
-        .panel { border: 1px solid #b0b0b0; padding: 8px; background: #e8e8e8; height: 100%; transition: background-color 0.3s, border-color 0.3s; }
+        textarea { font-family: "MS UI Gothic", monospace; font-size: 12px; resize: none; border: 1px solid #7a7a7a; padding: 5px; background: white; width: 100%; }
+        input[type="text"] { border: 1px solid #7a7a7a; padding: 2px; }
+        .panel { border: 1px solid #b0b0b0; padding: 8px; background: #e8e8e8; height: 100%; }
         
         #urlEditorContainer { flex: 0 0 300px; }
-        #urlEditorWindow { background: #f0f0f0; border: 2px solid #7a7a7a; padding: 10px; display: flex; flex-direction: column; gap: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); transition: background-color 0.3s, border-color 0.3s; }
+        #urlEditorWindow { background: #f0f0f0; border: 2px solid #7a7a7a; padding: 10px; display: flex; flex-direction: column; gap: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
         .url-box { height: 60px !important; width: 100%; }
-        .active-line-info { background: #333; color: #fff; padding: 3px 8px; margin-bottom: 5px; transition: background-color 0.3s; }
+        .active-line-info { background: #333; color: #fff; padding: 3px 8px; margin-bottom: 5px; }
 
-        button { padding: 8px 20px; cursor: pointer; background: #e1e1e1; border: 1px solid #7a7a7a; transition: background-color 0.3s, color 0.3s; }
+        button { padding: 8px 20px; cursor: pointer; background: #e1e1e1; border: 1px solid #7a7a7a; }
         button:hover { background: #d1d1d1; }
         #textBox2 { background: white; color: black; height: 450px; }
         .main-editor { height: 180px !important; }
         .current-target { border: 2px solid #0078d7 !important; }
-
-        /* マスタフモード用トグルスイッチのスタイル */
-        .toggle-wrapper { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #b0b0b0; padding-bottom: 8px; margin-bottom: 8px; }
-        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; }
-        input:checked + .slider { background-color: #8b0000; }
-        input:checked + .slider:before { transform: translateX(22px); }
-        .slider.round { border-radius: 22px; }
-        .slider.round:before { border-radius: 50%; }
-
-        /* マスタフモード（ダークモード）のスタイル */
-        body.mastaph-mode { background: #1a1a1a; color: #f0f0f0; }
-        .mastaph-mode label { background: #333; color: #f0f0f0; border-color: #555; }
-        .mastaph-mode textarea { background: #2a2a2a; color: #e0e0e0; border-color: #555; }
-        .mastaph-mode input[type="text"] { background: #2a2a2a; color: #e0e0e0; border-color: #555; }
-        .mastaph-mode .panel { background: #222; border-color: #444; }
-        .mastaph-mode #urlEditorWindow { background: #222; border-color: #444; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
-        .mastaph-mode .active-line-info { background: #000; color: #ccc; }
-        .mastaph-mode button { background: #444; color: #f0f0f0; border-color: #666; }
-        .mastaph-mode button:hover { background: #555; }
-        .mastaph-mode #textBox2 { background: #0d0d0d; color: #e0e0e0; border-color: #444; }
-        .mastaph-mode #secretPage { background: #222; color: #f0f0f0; border-color: #555; }
-        .mastaph-mode .toggle-wrapper { border-bottom-color: #555; }
 
         @media screen and (max-width: 768px) {
             .row {
@@ -82,7 +57,6 @@
             outline: none;
             -webkit-tap-highlight-color: transparent;
         }
-        .mastaph-mode #secretBtn { color: #444; }
 
         #secretPage {
             display: none;
@@ -94,7 +68,6 @@
             white-space: pre-wrap;
             line-height: 1.6;
             font-size: 14px;
-            transition: background-color 0.3s, color 0.3s;
         }
         
         .return-btn-container {
@@ -167,17 +140,11 @@
             </div>
             <div class="col">
                 <div class="panel">
-                    <div class="toggle-wrapper">
-                        <label style="border:none; background:none; padding:0; margin:0; font-weight:bold;">マスタフモード</label>
-                        <label class="switch">
-                            <input type="checkbox" id="mastaphToggle" onchange="toggleMastaphMode()">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                    <div style="display: flex; align-items: center;">
                         <label style="border:none; background:none; padding:0; margin:0;">設定項目</label>
                         <button id="secretBtn" onclick="toggleSecretPage()">?</button>
                     </div>
+                    <br>
                     <input type="checkbox" id="checkBox1" checked> 主催戦あり<br>
                     <input type="checkbox" id="checkBox2" checked> ランダム主催者<br>
                     <input type="checkbox" id="checkBox3" checked> 死因の適用<br>
@@ -194,7 +161,7 @@
 
 <div id="secretPage">マネモブくん！
 ここでとっておきの情報だよ。
-どうやらこのシミュレーターには特殊コマンドがあるらしい。
+このシミュレーターには特殊コマンドがあるらしい。
 イベントや死因の行末に記載すると機能するようになるみたいだ。
 
 コマンドその1
@@ -260,14 +227,6 @@ let storage = {
 
 let currentTargetId = '';
 let currentLineNum = -1;
-
-function toggleMastaphMode() {
-    if (document.getElementById('mastaphToggle').checked) {
-        document.body.classList.add('mastaph-mode');
-    } else {
-        document.body.classList.remove('mastaph-mode');
-    }
-}
 
 function toggleSecretPage() {
     const mainContent = document.getElementById('mainContent');
@@ -371,38 +330,6 @@ function runSimulation() {
     log.value = "";
     if (meiboLines.length === 0) return;
 
-    const isMastaphMode = document.getElementById('mastaphToggle').checked;
-    const c1 = document.getElementById('checkBox1').checked; 
-    const c2 = document.getElementById('checkBox3').checked; 
-    const c4 = document.getElementById('checkBox4').checked; 
-
-    if (isMastaphMode) {
-        let hasError = false;
-        let errorMsg = "";
-        
-        if (c2) {
-            satsugaiLines.forEach((line, i) => {
-                if (!line.match(/[\/／][NＮ]/i)) {
-                    hasError = true;
-                    errorMsg += `死因の${i+1}行目に /N が含まれていません。\n`;
-                }
-            });
-        }
-        if (c4) {
-            eventLines.forEach((line, i) => {
-                if (line.match(/[\/／][KＫNＮ]/i)) {
-                    hasError = true;
-                    errorMsg += `イベントの${i+1}行目に /K または /N が含まれています。\n`;
-                }
-            });
-        }
-
-        if (hasError) {
-            log.value = "【マスタフモード エラー】\n" + errorMsg + "\n修正してから再度ロワ開始を押してください。";
-            return;
-        }
-    }
-
     let num = meiboLines.length;
     let array = []; 
     let array4 = []; 
@@ -412,6 +339,9 @@ function runSimulation() {
     let num7=0, num8=0, num9=0, num12=1, num13=0, num14=0;
 
     let orgName = document.getElementById('textBox4').value;
+    const c1 = document.getElementById('checkBox1').checked; 
+    const c2 = document.getElementById('checkBox3').checked; 
+    const c4 = document.getElementById('checkBox4').checked; 
     const c5 = document.getElementById('checkBox5').checked; 
     const c6 = document.getElementById('checkBox6').checked; 
     const isRandOrg = document.getElementById('checkBox2').checked;
@@ -578,25 +508,10 @@ function runSimulation() {
                     log.value += vNames + " が 死亡しました" + trustSuffixStr + "\n";
                 }
             } else {
-                if (isMastaphMode) {
-                    let mStr = causeLine.replace(/[\/／][NＮ]/gi, vNames);
-                    if (numK > 0) {
-                        mStr = mStr.replace(/[\/／][KＫ]/gi, kNames);
-                    } else {
-                        mStr = mStr.replace(/[\/／][KＫ]/gi, "誰か");
-                    }
-                    if (mStr.match(/[\/／][MＭ]/i)) {
-                        let bystanders = available.filter(idx => !victims.includes(idx) && !killers.includes(idx));
-                        let mName = bystanders.length > 0 ? array[bystanders[Math.floor(Math.random() * bystanders.length)]].name : "何者か";
-                        mStr = mStr.replace(/[\/／][MＭ]/gi, mName);
-                    }
-                    log.value += mStr + trustSuffixStr + "\n";
+                if (numK > 0) {
+                    log.value += vNames + " は " + kNames + causeLine + trustSuffixStr + "\n";
                 } else {
-                    if (numK > 0) {
-                        log.value += vNames + " は " + kNames + causeLine + trustSuffixStr + "\n";
-                    } else {
-                        log.value += vNames + causeLine + trustSuffixStr + "\n";
-                    }
+                    log.value += vNames + causeLine + trustSuffixStr + "\n";
                 }
             }
 
@@ -688,13 +603,7 @@ function runSimulation() {
                     }
 
                     let aNames = actors.map(idx => array[idx].name).join(" と ");
-                    
-                    if (isMastaphMode) {
-                        let eStr = evLine.replace(/[\/／][MＭ]/gi, aNames);
-                        log.value += eStr + "\n";
-                    } else {
-                        log.value += aNames + evLine + "\n";
-                    }
+                    log.value += aNames + evLine + "\n";
 
                     let aUrls = actors.map(idx => getRandUrl('textBox1', idx)).filter(u=>u);
                     let eUrl = getRandUrl('textBox11', evIdx);
