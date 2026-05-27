@@ -6,74 +6,65 @@
     <title>風のバトロワシミュレーター</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: "MS UI Gothic", sans-serif; background: #f0f0f0; font-size: 12px; margin: 0; padding: 10px; }
+        body { font-family: "MS UI Gothic", sans-serif; background: #f0f0f0; font-size: 12px; margin: 0; padding: 10px; transition: background-color 0.3s, color 0.3s; }
         .window { width: 100%; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
         .row { display: flex; gap: 10px; }
         .col { display: flex; flex-direction: column; gap: 5px; flex: 1; }
         label { background: #dcdcdc; padding: 2px 5px; border: 1px solid #7a7a7a; }
-        textarea { font-family: "MS UI Gothic", monospace; font-size: 12px; resize: none; border: 1px solid #7a7a7a; padding: 5px; background: white; width: 100%; }
-        input[type="text"] { border: 1px solid #7a7a7a; padding: 2px; }
-        .panel { border: 1px solid #b0b0b0; padding: 8px; background: #e8e8e8; height: 100%; }
+        textarea { font-family: "MS UI Gothic", monospace; font-size: 12px; resize: none; border: 1px solid #7a7a7a; padding: 5px; background: white; width: 100%; transition: background-color 0.3s, color 0.3s; }
+        input[type="text"] { border: 1px solid #7a7a7a; padding: 2px; transition: background-color 0.3s, color 0.3s; }
+        .panel { border: 1px solid #b0b0b0; padding: 8px; background: #e8e8e8; height: 100%; transition: background-color 0.3s, border-color 0.3s; }
         
         #urlEditorContainer { flex: 0 0 300px; }
-        #urlEditorWindow { background: #f0f0f0; border: 2px solid #7a7a7a; padding: 10px; display: flex; flex-direction: column; gap: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+        #urlEditorWindow { background: #f0f0f0; border: 2px solid #7a7a7a; padding: 10px; display: flex; flex-direction: column; gap: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); transition: background-color 0.3s, border-color 0.3s; }
         .url-box { height: 60px !important; width: 100%; }
-        .active-line-info { background: #333; color: #fff; padding: 3px 8px; margin-bottom: 5px; }
+        .active-line-info { background: #333; color: #fff; padding: 3px 8px; margin-bottom: 5px; transition: background-color 0.3s; }
 
-        button { padding: 8px 20px; cursor: pointer; background: #e1e1e1; border: 1px solid #7a7a7a; }
+        button { padding: 8px 20px; cursor: pointer; background: #e1e1e1; border: 1px solid #7a7a7a; transition: background-color 0.3s, color 0.3s; }
         button:hover { background: #d1d1d1; }
         #textBox2 { background: white; color: black; height: 450px; }
         .main-editor { height: 180px !important; }
         .current-target { border: 2px solid #0078d7 !important; }
 
+        .toggle-wrapper { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 10px; border-radius: 5px; border: 2px solid #8b0000; margin-bottom: 15px; transition: background-color 0.3s, border-color 0.3s; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; }
+        input:checked + .slider { background-color: #8b0000; }
+        input:checked + .slider:before { transform: translateX(24px); }
+        .slider.round { border-radius: 26px; }
+        .slider.round:before { border-radius: 50%; }
+        .toggle-label { font-size: 14px; color: #8b0000; font-weight: bold; }
+
+        body.mastaph-mode { background: #1a1a1a; color: #f0f0f0; }
+        .mastaph-mode label { background: #333; color: #f0f0f0; border-color: #555; }
+        .mastaph-mode textarea { background: #2a2a2a; color: #e0e0e0; border-color: #555; }
+        .mastaph-mode input[type="text"] { background: #2a2a2a; color: #e0e0e0; border-color: #555; }
+        .mastaph-mode .panel { background: #222; border-color: #444; }
+        .mastaph-mode #urlEditorWindow { background: #222; border-color: #444; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
+        .mastaph-mode .active-line-info { background: #000; color: #ccc; }
+        .mastaph-mode button { background: #444; color: #f0f0f0; border-color: #666; }
+        .mastaph-mode button:hover { background: #555; }
+        .mastaph-mode #textBox2 { background: #0d0d0d; color: #e0e0e0; border-color: #444; }
+        .mastaph-mode #secretPage { background: #222; color: #f0f0f0; border-color: #555; }
+        .mastaph-mode .toggle-wrapper { background: #333; border-color: #ff4444; }
+        .mastaph-mode .toggle-label { color: #ff4444; }
+        .mastaph-mode input:checked + .slider { background-color: #ff4444; }
+
         @media screen and (max-width: 768px) {
-            .row {
-                flex-direction: column;
-            }
-            .col {
-                width: 100%;
-            }
-            .window {
-                padding: 0;
-            }
-            #urlEditorContainer {
-                display: none;
-            }
-            #urlEditorWindow {
-                flex: none;
-                width: 100%;
-                margin: 5px 0 15px 0;
-            }
+            .row { flex-direction: column; }
+            .col { width: 100%; }
+            .window { padding: 0; }
+            #urlEditorContainer { display: none; }
+            #urlEditorWindow { flex: none; width: 100%; margin: 5px 0 15px 0; }
         }
 
-        #secretBtn {
-            background: transparent;
-            border: none;
-            color: #dfdfdf;
-            cursor: pointer;
-            font-size: 14px;
-            padding: 0 5px;
-            margin-left: 5px;
-            outline: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+        #secretBtn { background: transparent; border: none; color: #dfdfdf; cursor: pointer; font-size: 14px; padding: 0 5px; margin-left: 5px; outline: none; -webkit-tap-highlight-color: transparent; }
+        .mastaph-mode #secretBtn { color: #444; }
 
-        #secretPage {
-            display: none;
-            max-width: 800px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 20px;
-            border: 1px solid #7a7a7a;
-            white-space: pre-wrap;
-            line-height: 1.6;
-            font-size: 14px;
-        }
-        
-        .return-btn-container {
-            margin-top: 30px;
-            text-align: center;
-        }
+        #secretPage { display: none; max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border: 1px solid #7a7a7a; white-space: pre-wrap; line-height: 1.6; font-size: 14px; transition: background-color 0.3s, color 0.3s; }
+        .return-btn-container { margin-top: 30px; text-align: center; }
     </style>
 </head>
 <body>
@@ -140,11 +131,17 @@
             </div>
             <div class="col">
                 <div class="panel">
-                    <div style="display: flex; align-items: center;">
+                    <div class="toggle-wrapper">
+                        <div class="toggle-label">マスタフモード</div>
+                        <label class="switch">
+                            <input type="checkbox" id="mastaphToggle" onchange="toggleMastaphMode()">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 5px;">
                         <label style="border:none; background:none; padding:0; margin:0;">設定項目</label>
                         <button id="secretBtn" onclick="toggleSecretPage()">?</button>
                     </div>
-                    <br>
                     <input type="checkbox" id="checkBox1" checked> 主催戦あり<br>
                     <input type="checkbox" id="checkBox2" checked> ランダム主催者<br>
                     <input type="checkbox" id="checkBox3" checked> 死因の適用<br>
@@ -219,14 +216,17 @@
 </div>
 
 <script>
-let storage = {
-    'textBox1': {},
-    'textBox8': {},
-    'textBox11': {}
-};
-
+let storage = { 'textBox1': {}, 'textBox8': {}, 'textBox11': {} };
 let currentTargetId = '';
 let currentLineNum = -1;
+
+function toggleMastaphMode() {
+    if (document.getElementById('mastaphToggle').checked) {
+        document.body.classList.add('mastaph-mode');
+    } else {
+        document.body.classList.remove('mastaph-mode');
+    }
+}
 
 function toggleSecretPage() {
     const mainContent = document.getElementById('mainContent');
@@ -259,7 +259,6 @@ function updateActiveLine(el) {
     document.getElementById('urlNormal').value = storage[currentTargetId][currentLineNum].normal.join('\n');
     document.getElementById('urlKill').value = (storage[currentTargetId][currentLineNum].kill || []).join('\n');
     document.getElementById('urlDeath').value = storage[currentTargetId][currentLineNum].death.join('\n');
-
     moveUrlEditor(el);
 }
 
@@ -275,13 +274,8 @@ function getRandUrl(category, lineIdx, type = 'normal') {
     const data = storage[category][lineIdx];
     if (!data) return "";
     let pool = data.normal;
-    
-    if (type === 'death' && data.death && data.death.length > 0) {
-        pool = data.death;
-    } else if (type === 'kill' && data.kill && data.kill.length > 0) {
-        pool = data.kill;
-    }
-    
+    if (type === 'death' && data.death && data.death.length > 0) pool = data.death;
+    else if (type === 'kill' && data.kill && data.kill.length > 0) pool = data.kill;
     if (!pool || pool.length === 0) return "";
     return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -289,28 +283,19 @@ function getRandUrl(category, lineIdx, type = 'normal') {
 function moveUrlEditor(activeElement) {
     const urlEditor = document.getElementById('urlEditorWindow');
     const container = document.getElementById('urlEditorContainer');
-    const editorGroup = document.getElementById('editorGroupRow');
-    
     if (window.innerWidth <= 768) {
         if (activeElement) {
             const col = activeElement.parentNode;
             const row = col.parentNode;
             const nextCol = col.nextElementSibling;
-            
             if (nextCol) {
-                if (urlEditor.nextElementSibling !== nextCol) {
-                    row.insertBefore(urlEditor, nextCol);
-                }
+                if (urlEditor.nextElementSibling !== nextCol) row.insertBefore(urlEditor, nextCol);
             } else {
-                if (urlEditor.parentNode !== row || urlEditor.nextElementSibling !== null) {
-                    row.appendChild(urlEditor);
-                }
+                if (urlEditor.parentNode !== row || urlEditor.nextElementSibling !== null) row.appendChild(urlEditor);
             }
         }
     } else {
-        if (urlEditor.parentNode !== container) {
-            container.appendChild(urlEditor);
-        }
+        if (urlEditor.parentNode !== container) container.appendChild(urlEditor);
     }
 }
 
@@ -330,18 +315,52 @@ function runSimulation() {
     log.value = "";
     if (meiboLines.length === 0) return;
 
+    const isMastaphMode = document.getElementById('mastaphToggle').checked;
+    const c1 = document.getElementById('checkBox1').checked; 
+    const c2 = document.getElementById('checkBox3').checked; 
+    const c4 = document.getElementById('checkBox4').checked; 
+
+    if (isMastaphMode) {
+        let hasError = false;
+        let errorMsg = "";
+        if (c2) {
+            satsugaiLines.forEach((line, i) => {
+                if (!line.match(/[\/／][NＮ]/i)) {
+                    hasError = true;
+                    errorMsg += `死因の${i+1}行目に /N が含まれていません。\n`;
+                }
+                if (line.match(/[\/／]S([1-9]|10)$/i)) {
+                    hasError = true;
+                    errorMsg += `死因の${i+1}行目に /S コマンドが含まれています（マスタフモードでは使用不可）。\n`;
+                }
+            });
+        }
+        if (c4) {
+            eventLines.forEach((line, i) => {
+                if (line.match(/[\/／][KＫNＮ]/i)) {
+                    hasError = true;
+                    errorMsg += `イベントの${i+1}行目に /K または /N が含まれています（使用不可）。\n`;
+                }
+                if (line.match(/[\/／]S([1-9]|10)$/i)) {
+                    hasError = true;
+                    errorMsg += `イベントの${i+1}行目に /S コマンドが含まれています（マスタフモードでは使用不可）。\n`;
+                }
+            });
+        }
+        if (hasError) {
+            log.value = "【マスタフモード エラー】\n" + errorMsg + "\n修正してから再度ロワ開始を押してください。";
+            return;
+        }
+    }
+
     let num = meiboLines.length;
     let array = []; 
     let array4 = []; 
     let array6 = new Array(num).fill(0); 
-    let array7 = []; 
-
-    let num7=0, num8=0, num9=0, num12=1, num13=0, num14=0;
+    
+    let num12=1, num13=0, num14=0;
 
     let orgName = document.getElementById('textBox4').value;
-    const c1 = document.getElementById('checkBox1').checked; 
-    const c2 = document.getElementById('checkBox3').checked; 
-    const c4 = document.getElementById('checkBox4').checked; 
     const c5 = document.getElementById('checkBox5').checked; 
     const c6 = document.getElementById('checkBox6').checked; 
     const isRandOrg = document.getElementById('checkBox2').checked;
@@ -352,15 +371,10 @@ function runSimulation() {
         let parts = line.split(',');
         let name = parts[0].trim();
         let aggro = parts[1] ? parseInt(parts[1]) : 0;
-        
         if (isNaN(aggro)) aggro = 0;
         if (aggro < 0) aggro = 0;
         if (aggro > 999) aggro = 999;
-        
         array[i] = { name: name, aggro: aggro, originalIdx: i };
-        
-        if (!array7[aggro]) array7[aggro] = [];
-        array7[aggro].push(i);
     });
 
     let indices = Array.from({length: num}, (_, i) => i);
@@ -387,9 +401,7 @@ function runSimulation() {
                 entries.push(tObj[targetIdx] + "→" + array[targetIdx].name);
             }
         }
-        if (entries.length > 0) {
-            return "（信頼度" + entries.join("、") + "）";
-        }
+        if (entries.length > 0) return "（信頼度" + entries.join("、") + "）";
         return "";
     }
 
@@ -402,26 +414,38 @@ function runSimulation() {
             if (c2 && satsugaiLines.length > 0) {
                 for (let idx = 0; idx < satsugaiLines.length; idx++) {
                     let line = satsugaiLines[idx];
-                    let match = line.match(/[\/／](1|12|13|14|21|31|41)$/);
-                    let nV = 1, nK = 1;
-                    if (match) {
-                        let cmd = match[1];
-                        if (cmd === '1') nK = 0;
-                        else if (cmd === '12') nK = 2;
-                        else if (cmd === '13') nK = 3;
-                        else if (cmd === '14') nK = 4;
-                        else if (cmd === '21') nV = 2;
-                        else if (cmd === '31') nV = 3;
-                        else if (cmd === '41') nV = 4;
-                    }
-                    if (available.length >= nV + nK) {
-                        validCauses.push({line: line, nV: nV, nK: nK, origIdx: idx});
+                    let nV = 1, nK = 1, nM = 0;
+                    let cleanLine = line;
+
+                    if (isMastaphMode) {
+                        nV = (line.match(/[\/／][NＮ]/gi) || []).length;
+                        nK = (line.match(/[\/／][KＫ]/gi) || []).length;
+                        nM = (line.match(/[\/／][MＭ]/gi) || []).length;
+                        cleanLine = cleanLine.replace(/[\/／](1|12|13|14|21|31|41|3|4|5)$/g, "");
+
+                        if (nV > 0 && available.length >= nV + nK + nM) {
+                            validCauses.push({line: cleanLine, nV: nV, nK: nK, nM: nM, origIdx: idx});
+                        }
+                    } else {
+                        let match = line.match(/[\/／](1|12|13|14|21|31|41)$/);
+                        if (match) {
+                            let cmd = match[1];
+                            if (cmd === '1') nK = 0;
+                            else if (cmd === '12') nK = 2;
+                            else if (cmd === '13') nK = 3;
+                            else if (cmd === '14') nK = 4;
+                            else if (cmd === '21') nV = 2;
+                            else if (cmd === '31') nV = 3;
+                            else if (cmd === '41') nV = 4;
+                        }
+                        if (available.length >= nV + nK) {
+                            validCauses.push({line: line, nV: nV, nK: nK, nM: 0, origIdx: idx});
+                        }
                     }
                 }
             }
 
-            let numV = 1;
-            let numK = 1;
+            let numV = 1, numK = 1, numM = 0;
             let causeLine = "";
             let causeIdx = -1;
 
@@ -430,21 +454,25 @@ function runSimulation() {
                 causeLine = picked.line;
                 numV = picked.nV;
                 numK = picked.nK;
+                numM = picked.nM;
                 causeIdx = picked.origIdx;
-                
-                let match = causeLine.match(/[\/／](1|12|13|14|21|31|41)$/);
-                if (match) {
-                    causeLine = causeLine.substring(0, causeLine.length - match[0].length);
+                if (!isMastaphMode) {
+                    let match = causeLine.match(/[\/／](1|12|13|14|21|31|41)$/);
+                    if (match) causeLine = causeLine.substring(0, causeLine.length - match[0].length);
                 }
             } else {
-                if (available.length >= 2) { numV = 1; numK = 1; }
-                else { numV = 1; numK = 0; }
+                if (isMastaphMode) {
+                    numV = 1; numK = 1; numM = 0;
+                    if (available.length < 2) numK = 0;
+                    causeLine = numK === 0 ? "/N は死亡しました" : "/N は /K に殺されました";
+                } else {
+                    if (available.length >= 2) { numV = 1; numK = 1; }
+                    else { numV = 1; numK = 0; }
+                }
             }
 
             let victims = [];
-            for (let i = 0; i < numV; i++) {
-                victims.push(array4[num13 + i]);
-            }
+            for (let i = 0; i < numV; i++) victims.push(array4[num13 + i]);
 
             let possibleKillers = array4.slice(num13 + numV);
             let killers = [];
@@ -461,64 +489,58 @@ function runSimulation() {
                         if (c5) w = Math.max(1, array[pIdx].aggro + 1);
                         if (c6) {
                             let K_trust = victims.reduce((sum, vIdx) => sum + (trustMatrix[pIdx][vIdx] || 0), 0);
-                            if (K_trust > 0) {
-                                K_trust = Math.min(99, K_trust);
-                                w = w * Math.pow(0.9, K_trust);
-                            }
+                            if (K_trust > 0) w = w * Math.pow(0.9, Math.min(99, K_trust));
                         }
                         weights.push(w);
                         totalWeight += w;
                     }
-                    
                     let rand = Math.random() * totalWeight;
                     let pickedIdx = pool.length - 1;
                     for (let j = 0; j < pool.length; j++) {
                         rand -= weights[j];
-                        if (rand <= 0) {
-                            pickedIdx = j;
-                            break;
-                        }
+                        if (rand <= 0) { pickedIdx = j; break; }
                     }
                     killers.push(pool.splice(pickedIdx, 1)[0]);
                 }
             }
-
-            let vNames = victims.map(idx => array[idx].name).join(" と ");
-            let kNames = killers.map(idx => array[idx].name).join(" と ");
+            
+            let bystanders = [];
+            if (isMastaphMode && numM > 0) {
+                let tempBystanders = available.filter(idx => !victims.includes(idx) && !killers.includes(idx));
+                tempBystanders.sort(() => Math.random() - 0.5);
+                bystanders = tempBystanders.slice(0, numM);
+            }
 
             let trustSuffixes = [];
             if (c6) {
                 victims.forEach(vIdx => {
                     let ts = getTrustString(vIdx);
-                    if (ts) {
-                        if (victims.length > 1) {
-                            trustSuffixes.push(array[vIdx].name + "の" + ts.substring(1, ts.length - 1));
-                        } else {
-                            trustSuffixes.push(ts.substring(1, ts.length - 1));
-                        }
-                    }
+                    if (ts) trustSuffixes.push((victims.length > 1 ? array[vIdx].name + "の" : "") + ts.substring(1, ts.length - 1));
                 });
             }
             let trustSuffixStr = trustSuffixes.length > 0 ? "（" + trustSuffixes.join("、") + "）" : "";
 
-            if (!c2) {
-                if (numK > 0) {
-                    log.value += vNames + " が " + kNames + " に 殺されました" + trustSuffixStr + "\n";
-                } else {
-                    log.value += vNames + " が 死亡しました" + trustSuffixStr + "\n";
-                }
+            if (isMastaphMode) {
+                let vIdxCount = 0, kIdxCount = 0, mIdxCount = 0;
+                let mStr = causeLine.replace(/[\/／][NＮ]/gi, () => array[victims[vIdxCount++]].name);
+                mStr = mStr.replace(/[\/／][KＫ]/gi, () => array[killers[kIdxCount++]].name);
+                mStr = mStr.replace(/[\/／][MＭ]/gi, () => array[bystanders[mIdxCount++]].name);
+                log.value += mStr + trustSuffixStr + "\n";
             } else {
-                if (numK > 0) {
-                    log.value += vNames + " は " + kNames + causeLine + trustSuffixStr + "\n";
+                let vNames = victims.map(idx => array[idx].name).join(" と ");
+                let kNames = killers.map(idx => array[idx].name).join(" と ");
+                if (!c2) {
+                    if (numK > 0) log.value += vNames + " が " + kNames + " に 殺されました" + trustSuffixStr + "\n";
+                    else log.value += vNames + " が 死亡しました" + trustSuffixStr + "\n";
                 } else {
-                    log.value += vNames + causeLine + trustSuffixStr + "\n";
+                    if (numK > 0) log.value += vNames + " は " + kNames + causeLine + trustSuffixStr + "\n";
+                    else log.value += vNames + causeLine + trustSuffixStr + "\n";
                 }
             }
 
             let dUrls = victims.map(idx => getRandUrl('textBox1', idx, 'death')).filter(u=>u);
             let kUrls = killers.map(idx => getRandUrl('textBox1', idx, 'kill')).filter(u=>u);
             let cUrl = (c2 && causeIdx !== -1) ? getRandUrl('textBox8', causeIdx) : "";
-            
             let allUrls = [...dUrls, ...kUrls];
             if (cUrl) allUrls.push(cUrl);
             let urlLine = allUrls.join(" ").trim();
@@ -526,9 +548,6 @@ function runSimulation() {
 
             killers.forEach(kIdx => {
                 array6[kIdx] += numV;
-                if (array6[num7] < array6[kIdx] && num7 != kIdx) { num9=num8; num8=num7; num7=kIdx; }
-                else if (array6[num8] < array6[kIdx] && num8 != kIdx) { num9=num8; num8=kIdx; }
-                else if (array6[num9] < array6[kIdx] && num9 != kIdx) { num9=kIdx; }
             });
 
             num13 += numV;
@@ -540,15 +559,21 @@ function runSimulation() {
                 for (let idx = 0; idx < eventLines.length; idx++) {
                     let line = eventLines[idx];
                     let tempLine = line;
-                    let nA = 2;
-                    let parsing = true;
-                    while(parsing) {
-                        parsing = false;
+                    let trustGain = 0;
+
+                    if (isMastaphMode) {
+                        tempLine = tempLine.replace(/[\/／](1|12|13|14|21|31|41|3|4|5)$/g, "");
+                        let nA = (tempLine.match(/[\/／][MＭ]/gi) || []).length;
+                        if (nA > 0 && evAlive.length >= nA) {
+                            validEvents.push({line: tempLine, nA: nA, trustGain: 0, origIdx: idx});
+                        }
+                    } else {
                         let mS = tempLine.match(/[\/／]S([1-9]|10)$/i);
                         if (mS) {
+                            trustGain = parseInt(mS[1]);
                             tempLine = tempLine.substring(0, tempLine.length - mS[0].length);
-                            parsing = true;
                         }
+                        let nA = 2;
                         let mN = tempLine.match(/[\/／](1|3|4|5)$/);
                         if (mN) {
                             let cmd = mN[1];
@@ -557,11 +582,10 @@ function runSimulation() {
                             else if (cmd === '4') nA = 4;
                             else if (cmd === '5') nA = 5;
                             tempLine = tempLine.substring(0, tempLine.length - mN[0].length);
-                            parsing = true;
                         }
-                    }
-                    if (evAlive.length >= nA) {
-                        validEvents.push({line: line, nA: nA, origIdx: idx});
+                        if (evAlive.length >= nA) {
+                            validEvents.push({line: tempLine, nA: nA, trustGain: trustGain, origIdx: idx});
+                        }
                     }
                 }
 
@@ -570,23 +594,7 @@ function runSimulation() {
                     let evLine = picked.line;
                     let numA = picked.nA;
                     let evIdx = picked.origIdx;
-
-                    let trustGain = 0;
-                    let parsing = true;
-                    while (parsing) {
-                        parsing = false;
-                        let mS = evLine.match(/[\/／]S([1-9]|10)$/i);
-                        if (mS) {
-                            trustGain = parseInt(mS[1]);
-                            evLine = evLine.substring(0, evLine.length - mS[0].length);
-                            parsing = true;
-                        }
-                        let mN = evLine.match(/[\/／](1|3|4|5)$/);
-                        if (mN) {
-                            evLine = evLine.substring(0, evLine.length - mN[0].length);
-                            parsing = true;
-                        }
-                    }
+                    let trustGain = picked.trustGain;
 
                     evAlive.sort(() => Math.random() - 0.5);
                     let actors = evAlive.slice(0, numA);
@@ -602,8 +610,14 @@ function runSimulation() {
                         }
                     }
 
-                    let aNames = actors.map(idx => array[idx].name).join(" と ");
-                    log.value += aNames + evLine + "\n";
+                    if (isMastaphMode) {
+                        let aIdxCount = 0;
+                        let eStr = evLine.replace(/[\/／][MＭ]/gi, () => array[actors[aIdxCount++]].name);
+                        log.value += eStr + "\n";
+                    } else {
+                        let aNames = actors.map(idx => array[idx].name).join(" と ");
+                        log.value += aNames + evLine + "\n";
+                    }
 
                     let aUrls = actors.map(idx => getRandUrl('textBox1', idx)).filter(u=>u);
                     let eUrl = getRandUrl('textBox11', evIdx);
@@ -677,9 +691,17 @@ function runSimulation() {
         log.value += "以上の" + num15 + "名でした\n\n";
     }
 
-    if (array6[num7] > 0) log.value += "トップマーダーは" + array6[num7] + "人殺した" + array[num7].name + "でした\n";
-    if (num8 != num7 && array6[num8] > 0) log.value += "次点は" + array6[num8] + "人殺した" + array[num8].name + "でした\n";
-    if (num9 != num8 && num9 != num7 && array6[num9] > 0) log.value += "次点は" + array6[num9] + "人殺した" + array[num9].name + "でした\n";
+    let rank = [];
+    for (let i = 0; i < num; i++) {
+        if (array6[i] > 0) {
+            rank.push(i);
+        }
+    }
+    rank.sort((a, b) => array6[b] - array6[a]);
+
+    if (rank.length > 0) log.value += "トップマーダーは" + array6[rank[0]] + "人殺した" + array[rank[0]].name + "でした\n";
+    if (rank.length > 1) log.value += "次点は" + array6[rank[1]] + "人殺した" + array[rank[1]].name + "でした\n";
+    if (rank.length > 2) log.value += "次点は" + array6[rank[2]] + "人殺した" + array[rank[2]].name + "でした\n";
 }
 </script>
 </body>
