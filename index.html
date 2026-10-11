@@ -65,6 +65,11 @@
 
         #secretPage { display: none; max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border: 1px solid #7a7a7a; white-space: pre-wrap; line-height: 1.6; font-size: 14px; transition: background-color 0.3s, color 0.3s; }
         .return-btn-container { margin-top: 30px; text-align: center; }
+        
+        .clear-url-btn { padding: 4px 10px; font-size: 11px; background-color: #ffcccc; border-color: #cc0000; color: #cc0000; }
+        .clear-url-btn:hover { background-color: #ff9999; }
+        .mastaph-mode .clear-url-btn { background-color: #552222; border-color: #aa4444; color: #ff8888; }
+        .mastaph-mode .clear-url-btn:hover { background-color: #773333; }
     </style>
 </head>
 <body>
@@ -76,7 +81,7 @@
                 <div class="row" id="editorGroupRow">
                     <div class="col">
                         <label>名簿</label>
-                        <textarea id="textBox1" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">太郎,1
+                        <textarea id="textBox1" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)" oninput="saveTextsToLocal()">太郎,1
 次郎,0
 三郎,2
 シロウ,1
@@ -86,7 +91,7 @@
                     </div>
                     <div class="col">
                         <label>死因</label>
-                        <textarea id="textBox8" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">に撲殺されました
+                        <textarea id="textBox8" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)" oninput="saveTextsToLocal()">に撲殺されました
 に暗殺されました
 に斬殺されました
 に毒殺されました
@@ -94,7 +99,7 @@
                     </div>
                     <div class="col">
                         <label>イベント</label>
-                        <textarea id="textBox11" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)">が接触し情報を共有しました
+                        <textarea id="textBox11" class="main-editor" onkeyup="updateActiveLine(this)" onclick="updateActiveLine(this)" oninput="saveTextsToLocal()">が接触し情報を共有しました
 は疑心暗鬼になり分裂してしまいました
 は行動をともにし仲を深めました</textarea>
                     </div>
@@ -119,7 +124,10 @@
                         <label style="display:block; border:none; background:none;">死亡時の画像URL (キャラのみ)</label>
                         <textarea id="urlDeath" class="url-box" placeholder="殺害された時のみ表示" oninput="saveUrls()"></textarea>
                     </div>
-                    <div style="font-size: 10px; color: #666;">※上のリストの行を選択すると切り替わります</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 10px; color: #666;">※上のリストの行を選択すると切り替わります</div>
+                        <button class="clear-url-btn" onclick="clearUrls()">全URLをクリア</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -219,6 +227,51 @@ let storage = { 'textBox1': {}, 'textBox8': {}, 'textBox11': {} };
 let currentTargetId = '';
 let currentLineNum = -1;
 
+// ページ読み込み時にローカルストレージからデータを復元
+window.addEventListener('DOMContentLoaded', () => {
+    const savedTextBox1 = localStorage.getItem('sim_textBox1');
+    if (savedTextBox1 !== null) document.getElementById('textBox1').value = savedTextBox1;
+    
+    const savedTextBox8 = localStorage.getItem('sim_textBox8');
+    if (savedTextBox8 !== null) document.getElementById('textBox8').value = savedTextBox8;
+    
+    const savedTextBox11 = localStorage.getItem('sim_textBox11');
+    if (savedTextBox11 !== null) document.getElementById('textBox11').value = savedTextBox11;
+
+    const savedStorage = localStorage.getItem('sim_storage');
+    if (savedStorage !== null) {
+        try {
+            storage = JSON.parse(savedStorage);
+        } catch (e) {
+            console.error("Storage parse error", e);
+        }
+    }
+});
+
+// テキストエリアの内容を保存する関数
+function saveTextsToLocal() {
+    localStorage.setItem('sim_textBox1', document.getElementById('textBox1').value);
+    localStorage.setItem('sim_textBox8', document.getElementById('textBox8').value);
+    localStorage.setItem('sim_textBox11', document.getElementById('textBox11').value);
+}
+
+// storageオブジェクトを保存する関数
+function saveStorageToLocal() {
+    localStorage.setItem('sim_storage', JSON.stringify(storage));
+}
+
+// すべてのURLをワンタッチで一括クリアする関数
+function clearUrls() {
+    // 全URLデータを空にする
+    storage = { 'textBox1': {}, 'textBox8': {}, 'textBox11': {} };
+    // 画面の入力欄を空にする
+    document.getElementById('urlNormal').value = '';
+    document.getElementById('urlKill').value = '';
+    document.getElementById('urlDeath').value = '';
+    // ローカルストレージに空の状態を保存して上書きする
+    saveStorageToLocal();
+}
+
 function toggleMastaphMode() {
     if (document.getElementById('mastaphToggle').checked) {
         document.body.classList.add('mastaph-mode');
@@ -267,6 +320,7 @@ function saveUrls() {
     const killVal = document.getElementById('urlKill').value.split('\n').map(u => u.trim()).filter(u => u.startsWith('http')).slice(0, 30);
     const deathVal = document.getElementById('urlDeath').value.split('\n').map(u => u.trim()).filter(u => u.startsWith('http')).slice(0, 30);
     storage[currentTargetId][currentLineNum] = { normal: normalVal, kill: killVal, death: deathVal };
+    saveStorageToLocal();
 }
 
 function getRandUrl(category, lineIdx, type = 'normal') {
